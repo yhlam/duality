@@ -1,0 +1,6 @@
+.project
+.classpath
+.settings/
+target/
+client/bin/
+client/gen/
