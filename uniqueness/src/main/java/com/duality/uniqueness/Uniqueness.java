@@ -11,6 +11,8 @@ import java.util.Set;
 
 import opennlp.tools.tokenize.SimpleTokenizer;
 
+import org.tartarus.snowball.ext.EnglishStemmer;
+
 public class Uniqueness {
 
 	private final Set<List<String>> corpus;
@@ -23,11 +25,18 @@ public class Uniqueness {
 		final BufferedReader reader = new BufferedReader(fileReader);
 
 		final SimpleTokenizer tokenizer = SimpleTokenizer.INSTANCE;
+		final EnglishStemmer stemer = new EnglishStemmer();
+
 		corpus = new HashSet<List<String>>();
 
 		String line;
 		while ((line = reader.readLine()) != null) {
 			final String[] tokens = tokenizer.tokenize(line);
+			for (int i = 0; i < tokens.length; i++) {
+				stemer.setCurrent(tokens[i]);
+				tokens[i] = stemer.getCurrent();
+			}
+
 			final int maxIndex = tokens.length - n;
 
 			for (int i = 0; i < maxIndex; i++) {

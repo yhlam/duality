@@ -12,6 +12,8 @@ import java.util.Set;
 
 import opennlp.tools.tokenize.SimpleTokenizer;
 
+import org.tartarus.snowball.ext.EnglishStemmer;
+
 public class SelfUniqueness {
 
 	private final int tokenNum;
@@ -20,8 +22,10 @@ public class SelfUniqueness {
 	private final double avgLength;
 
 	/**
-	 * @param filename File to analysis
-	 * @param n Number of token as a group
+	 * @param filename
+	 *            File to analysis
+	 * @param n
+	 *            Number of token as a group
 	 * @throws IOException
 	 */
 	public SelfUniqueness(final String filename, final int n) throws IOException {
@@ -31,6 +35,7 @@ public class SelfUniqueness {
 		final BufferedReader reader = new BufferedReader(fileReader);
 
 		final SimpleTokenizer tokenizer = SimpleTokenizer.INSTANCE;
+		final EnglishStemmer stemer = new EnglishStemmer();
 		final Set<List<String>> coreSet = new HashSet<List<String>>();
 
 		double tokenNum = 0;
@@ -39,6 +44,14 @@ public class SelfUniqueness {
 		String line;
 		while ((line = reader.readLine()) != null) {
 			final String[] tokens = tokenizer.tokenize(line);
+			for (int i = 0; i < tokens.length; i++) {
+				final String token = tokens[i];
+				stemer.setCurrent(token);
+				stemer.stem();
+				final String stemmed = stemer.getCurrent();
+				tokens[i] = stemmed;
+			}
+
 			final int maxIndex = tokens.length - n;
 			tokenNum += tokens.length;
 
