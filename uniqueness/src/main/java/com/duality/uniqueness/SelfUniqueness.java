@@ -55,7 +55,7 @@ public class SelfUniqueness {
 			final int maxIndex = tokens.length - n;
 			tokenNum += tokens.length;
 
-			for (int i = 0; i < maxIndex; i++) {
+			for (int i = 0; i <= maxIndex; i++) {
 				final String[] group = new String[n];
 				System.arraycopy(tokens, i, group, 0, n);
 				coreSet.add(Arrays.asList(group));

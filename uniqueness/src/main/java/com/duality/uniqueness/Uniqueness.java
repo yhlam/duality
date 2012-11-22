@@ -39,7 +39,7 @@ public class Uniqueness {
 
 			final int maxIndex = tokens.length - n;
 
-			for (int i = 0; i < maxIndex; i++) {
+			for (int i = 0; i <= maxIndex; i++) {
 				final String[] group = new String[n];
 				System.arraycopy(tokens, i, group, 0, n);
 				corpus.add(Arrays.asList(group));
