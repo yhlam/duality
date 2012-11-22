@@ -23,7 +23,7 @@
 		<dependency>
 			<groupId>android.support</groupId>
 			<artifactId>compatibility-v4</artifactId>
-			<version>10</version>
+			<version>11</version>
 		</dependency>
 	</dependencies>
 
