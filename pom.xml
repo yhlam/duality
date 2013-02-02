@@ -26,6 +26,18 @@
 		<connection>scm:git:git://github.com/yhlam/duality.git</connection>
 		<developerConnection>scm:git:ssh://git@github.com/yhlam/duality.git</developerConnection>
 	</scm>
+	<repositories>
+		<repository>
+			<id>hei-dropbox</id>
+			<url>http://ihome.ust.hk/~yhlam/mvn</url>
+		</repository>
+	</repositories>
+	<pluginRepositories>
+		<pluginRepository>
+			<id>hei-dropbox</id>
+			<url>http://ihome.ust.hk/~yhlam/mvn</url>
+		</pluginRepository>
+	</pluginRepositories>
 	<build>
 		<pluginManagement>
 			<plugins>
