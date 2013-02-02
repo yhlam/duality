@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin>
+    <class>com.duality.server.openfirePlugin.DualityPlugin</class>
+    <name>Duality</name>
+    <description>Plugin for Duality</description>
+    <author>Duality</author>
+    <version>1.0.0</version>
+    <minServerVersion>3.7.0</minServerVersion>
+</plugin>
