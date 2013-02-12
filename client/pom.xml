@@ -25,6 +25,11 @@
 			<artifactId>compatibility-v4</artifactId>
 			<version>11</version>
 		</dependency>
+		<dependency>
+			<groupId>org.igniterealtime.asmack</groupId>
+			<artifactId>asmack</artifactId>
+			<version>0.8_a15</version>
+		</dependency>
 	</dependencies>
 
 	<build>
