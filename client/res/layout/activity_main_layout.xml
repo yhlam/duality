@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    tools:context=".Main_Activity" >
+
+    <TableRow>
+
+        <TextView
+            android:id="@+id/content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/test_content" >
+        </TextView>
+    </TableRow>
+
+    <TableRow>
+
+        <ListView
+            android:id="@+id/contact_list"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" >
+        </ListView>
+    </TableRow>
+
+    <TableRow>
+
+        <Button
+            android:id="@+id/my_profile"
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:text="@string/my_profile" >
+        </Button>
+    </TableRow>
+
+    <TableRow>
+
+        <Button
+            android:id="@+id/about_us"
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:text="@string/about_us" >
+        </Button>
+    </TableRow>
+
+</TableLayout>
