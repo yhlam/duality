@@ -1,16 +1,59 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/about"
+    android:id="@+id/gtalk"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     tools:context=".Main_Activity" >
 
-	 <Button
-            android:id="@+id/setting"
-            android:layout_width="150dp"
-            android:layout_height="wrap_content"
-            android:text="@string/setting" >
-        </Button>
+    <TableRow>
 
-</RelativeLayout>
+        <Button
+            android:id="@+id/setting"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/setting" />
+    </TableRow>
+
+    <TableRow>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Receiver: " >
+        </TextView>
+
+        <EditText
+            android:id="@+id/receiver"
+            android:layout_width="150dp"
+            android:layout_height="50dp" >
+        </EditText>
+    </TableRow>
+
+    <TableRow>
+
+        <ListView
+            android:id="@+id/sentText"
+            android:layout_width="fill_parent"
+            android:layout_height="248dp"
+            android:scrollbars="vertical" >
+        </ListView>
+    </TableRow>
+
+    <TableRow>
+
+        <EditText
+            android:id="@+id/message"
+            android:layout_width="150dp"
+            android:layout_height="50dp" >
+        </EditText>
+
+        <Button
+            android:id="@+id/send"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Send" >
+        </Button>
+    </TableRow>
+
+</TableLayout>
