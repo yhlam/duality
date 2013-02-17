@@ -1,51 +1,103 @@
 <?xml version="1.0" encoding="utf-8"?>
-<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/gtalk"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
+    android:orientation="vertical"
     tools:context=".Main_Activity" >
 
-    <TableRow>
-
-        <Button
-            android:id="@+id/setting"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/setting" />
-    </TableRow>
-
-    <TableRow>
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" >
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:text="Username" >
+        </TextView>
+
+        <EditText
+            android:id="@+id/username"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="250px" >
+        </EditText>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" >
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Password" >
+        </TextView>
+
+        <EditText
+            android:id="@+id/password"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="250px"
+            android:password="true" >
+        </EditText>
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/setting"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="Connect!" />
+
+    <LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" >
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="70dp"
             android:text="Receiver: " >
         </TextView>
 
         <EditText
             android:id="@+id/receiver"
-            android:layout_width="150dp"
-            android:layout_height="50dp" >
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:autoText="false"
+            android:capitalize="none"
+            android:minWidth="250dp"
+            android:scrollHorizontally="true"
+            android:singleLine="true"
+            android:textSize="16sp" >
         </EditText>
-    </TableRow>
+    </LinearLayout>
 
-    <TableRow>
+    <ListView
+        android:id="@+id/sentText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:scrollbars="horizontal" >
+    </ListView>
 
-        <ListView
-            android:id="@+id/sentText"
-            android:layout_width="fill_parent"
-            android:layout_height="248dp"
-            android:scrollbars="vertical" >
-        </ListView>
-    </TableRow>
-
-    <TableRow>
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" >
 
         <EditText
             android:id="@+id/message"
-            android:layout_width="150dp"
-            android:layout_height="50dp" >
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="250dp"
+            android:scrollHorizontally="true"
+            android:singleLine="true" >
         </EditText>
 
         <Button
@@ -54,6 +106,6 @@
             android:layout_height="wrap_content"
             android:text="Send" >
         </Button>
-    </TableRow>
+    </LinearLayout>
 
-</TableLayout>
+</LinearLayout>

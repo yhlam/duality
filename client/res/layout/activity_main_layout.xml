@@ -52,7 +52,7 @@
             android:id="@+id/beta"
             android:layout_width="150dp"
             android:layout_height="wrap_content"
-            android:text="@string/about_us" >
+            android:text="GTalk Messaging" >
         </Button>
     </TableRow>
 
