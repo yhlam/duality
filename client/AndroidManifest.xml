@@ -8,6 +8,8 @@
         android:minSdkVersion="10"
         android:targetSdkVersion="15" />
 
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
@@ -30,19 +32,10 @@
             android:name="com.duality.client.Profile_Activity"
             android:label="@string/app_name_profile" >
         </activity>
+        <activity
+            android:name="com.duality.client.GTalk_Activity"
+            android:label="@string/app_name_profile" >
+        </activity>
     </application>
 
 </manifest>
-
-<!-- Old Activity, Backup Purpose -->
-<!-- 
-        <activity
-            android:name=".DualityContact"
-            android:label="@string/title_activity_duality_contact" >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-         -->

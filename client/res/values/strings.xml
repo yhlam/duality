@@ -17,6 +17,9 @@
     <!-- My_Profile -->
     <string name="profile_content">Profile_Activity</string>
     
+    <!-- GTalk -->
+    <string name="setting">Settings</string>
+    
     <!-- Testing Purpose -->
     <string name="beta_test">For Testing</string>
     

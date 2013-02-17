@@ -6,11 +6,11 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
-import android.widget.AdapterView.OnItemClickListener;
 
 public class Main_Activity extends Activity {
 
@@ -55,6 +55,18 @@ public class Main_Activity extends Activity {
 			}
 
 		});
+
+
+		Button test = (Button)findViewById(R.id.beta);
+		test.setOnClickListener(new Button.OnClickListener(){
+
+			@Override
+			public void onClick(View v) {
+				// TODO Auto-generated method stub
+				startActivity(new Intent(Main_Activity.this, GTalk_Activity.class));
+			}
+
+		});
 	}
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -62,5 +74,6 @@ public class Main_Activity extends Activity {
 		getMenuInflater().inflate(R.menu.activity_main_layout, menu);
 		return true;
 	}
+
 
 }
