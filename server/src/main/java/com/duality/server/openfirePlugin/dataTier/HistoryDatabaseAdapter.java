@@ -5,6 +5,7 @@ import java.util.List;
 /**
  * HistoryDatabaseAdapter is responsible for read and write the History database
  */
+// TODO (Terry): Think about do we need to build a cache to improve performance
 public class HistoryDatabaseAdapter {
 	private static final HistoryDatabaseAdapter INSTANCE = new HistoryDatabaseAdapter();
 	
@@ -22,7 +23,17 @@ public class HistoryDatabaseAdapter {
 	 * @return All chat history stored in database
 	 */
 	public List<HistoryEntry> getAllHistory() {
-		// TODO (Terry): Read the history from database
+		// TODO (Terry): Read the history from database or cache
+		return null;
+	}
+	
+	/**
+	 * Get History for a given ID
+	 * @param id ID of a history entry
+	 * @return a HistoryEntry with the ID
+	 */
+	public HistoryEntry getHistoryById(long id) {
+		// TODO (Terry): Get the corresponding ID from database or cache 
 		return null;
 	}
 	
@@ -33,4 +44,5 @@ public class HistoryDatabaseAdapter {
 	public void addHistory(HistoryEntry entry) {
 		// TODO (Terry): Write the history entry to database
 	}
+	
 }
