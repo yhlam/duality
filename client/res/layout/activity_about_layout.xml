@@ -1,23 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/about"
+    android:id="@+id/About"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:orientation="vertical"
     tools:context=".Main_Activity" >
 
-	<TextView
-	    android:id = "@+id/about_content"
-	    android:layout_width="wrap_content"
-	    android:layout_height="wrap_content"
-	    android:text="@string/about_content">
-	    
-	</TextView>  
-	
-	<ListView
-	     android:id = "@+id/listview1"
-	    android:layout_width="fill_parent"
-	    android:layout_height="wrap_content"></ListView>
+    <TextView
+        android:id="@+id/textView1"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:text="@string/aboutUs" />
 
 </LinearLayout>
