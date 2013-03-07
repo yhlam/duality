@@ -26,9 +26,9 @@ public class ChatlogActivity extends Activity {
 
 	private String recipentName;
 	private String recipentUsername;
-	public String dbName = "ChatDatabase";
-	public String recipentTable = "Recipents";
-	public String messagesTable = "Messages";
+	private String dbName = "ChatDatabase";
+//	private String recipentTable = "Recipents";
+	private String messagesTable = "Messages";
 
 	private ArrayList<String> mMessages = new ArrayList<String>();
 	private ListView mMessageList;
@@ -38,15 +38,19 @@ public class ChatlogActivity extends Activity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_chat);
+		setContentView(R.layout.act_chatlog);
+		
 		Intent intent = getIntent();
 		recipentName = (String) intent.getExtras().getString("name");
-		TextView contactName = (TextView) findViewById(R.id.contactName);
+		
+		TextView contactName = (TextView) findViewById(R.id.chatlog_recipentName);
+		Button sendMessage = (Button) this.findViewById(R.id.chatlog_send);
+		final EditText message = (EditText) this.findViewById(R.id.chatlog_typeMessage);
+		mMessageList = (ListView) this.findViewById(R.id.chatlog_chatlog);
+		
 		contactName.setText(recipentName);
-		final EditText message = (EditText) this.findViewById(R.id.typeMessage);
-		mMessageList = (ListView) this.findViewById(R.id.showMessage);
 		setListAdapter();
-		Button sendMessage = (Button) this.findViewById(R.id.buttonSend);
+		
 		sendMessage.setOnClickListener(new OnClickListener(){
 
 			@Override

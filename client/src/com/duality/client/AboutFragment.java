@@ -14,7 +14,7 @@ public class AboutFragment extends Fragment {
 
 	}
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-		View v = inflater.inflate(R.layout.activity_about_layout, container, false);
+		View v = inflater.inflate(R.layout.act_about, container, false);
 		return v;
 	}
 	public void onStop(){

@@ -13,7 +13,7 @@ public class DecapContact extends Activity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_profile_layout);
+		setContentView(R.layout.act_profile);
 		
 	}	
 

@@ -29,12 +29,12 @@ public class LoginActivity extends Activity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_login);
+		setContentView(R.layout.act_login);
 		// Initialized Views
-		mUsername = (EditText) this.findViewById(R.id.username_text);
-		mPwd = (EditText) this.findViewById(R.id.password_text);
+		mUsername = (EditText) this.findViewById(R.id.login_username);
+		mPwd = (EditText) this.findViewById(R.id.login_password);
 
-		Button signIn = (Button) this.findViewById(R.id.sign_in_button);
+		Button signIn = (Button) this.findViewById(R.id.login_signin);
 		signIn.setOnClickListener(new Button.OnClickListener(){
 			@Override
 			public void onClick(View v) {

@@ -35,8 +35,8 @@
     <string name="buttonAboutUs">About Us</string>
     <string name="editPicture">Edit Picture</string>
     <string name="editNamee">Edit Name</string>
-    <string name="aboutUs">"Testing Testing Testing Testing Testing Testing Testing Testing "</string>
-    <string name="buttonSend">Send</string>
+    <string name="about_aboutUs">"This is the best project existing in the universe. We will get A Range for sure."</string>
+    <string name="chatlog_send">Send</string>
     <string name="hintTypeMessage">Type your message here.</string>
-    <string name="addContact">Add Users</string>
+    <string name="contact_add">Add Users</string>
 </resources>

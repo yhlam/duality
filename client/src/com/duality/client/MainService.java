@@ -7,6 +7,9 @@ import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Packet;
 import org.jivesoftware.smack.util.StringUtils;
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.ContentValues;
 import android.content.Intent;
@@ -20,9 +23,10 @@ public class MainService extends Service {
 
 	SQLiteDatabase mDb;
 	ChatDataSQL mHelper;
-	public String dbName = "ChatDatabase";
-	public String recipentTable = "Recipents";
-	public String messagesTable = "Messages";
+	private String dbName = "ChatDatabase";
+	private String messagesTable = "Messages";
+	private static final int NOTIFICATION_ID = 1;
+	private NotificationManager mNtfMgr;
 
 	@Override
 	public IBinder onBind(Intent arg0) {
@@ -34,6 +38,7 @@ public class MainService extends Service {
 	public void onCreate() {
 		super.onCreate();
 		mHelper = new ChatDataSQL(this, dbName);
+		mNtfMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 	}
 
 	public int onStartCommand(Intent intent, int flags, int startId){
@@ -48,10 +53,10 @@ public class MainService extends Service {
 
 					Message message = (Message) packet;
 					if (message.getBody() != null) {
-						String senderName = StringUtils.parseBareAddress(message.getFrom());
+						String senderUsername = StringUtils.parseBareAddress(message.getFrom());
 						String text = message.getBody();
 						ContentValues c = new ContentValues();
-						c.put("sender", senderName);
+						c.put("sender", senderUsername);
 						c.put("recipent", XMPPManager.singleton().getUsername());
 						c.put("message", text);
 						// Put into database
@@ -60,7 +65,7 @@ public class MainService extends Service {
 						if(isInserted == -1){
 
 						}else{
-
+							showNotification(senderUsername, text);
 						}
 
 					}
@@ -69,5 +74,28 @@ public class MainService extends Service {
 		}
 		return 0;
 
+	}
+
+	private void showNotification(String senderUsername, String text){
+		
+		Intent intent = new Intent(this, MainActivity.class);
+		PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
+		Notification notification = new Notification.Builder(this)
+		.setSmallIcon(R.drawable.ic_launcher)
+		.setContentTitle(senderUsername)
+		.setContentText(text)
+//		.setContentInfo("信息"), should be time
+		.setTicker(senderUsername + ": " + text)
+//		.setLights(0xFFFFFFFF, 1000, 1000)
+		.setContentIntent(pendingIntent)
+		.setAutoCancel(true)
+		.getNotification();
+		mNtfMgr.notify(NOTIFICATION_ID, notification);
+		
+	}
+
+	public void onDestory(){
+		super.onDestroy();
+		mDb.close();
 	}
 }

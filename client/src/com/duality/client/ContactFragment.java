@@ -112,18 +112,18 @@ public class ContactFragment extends Fragment {
 
 
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-		final View v = inflater.inflate(R.layout.activity_contact_layout, container, false);
-		Button addButton = (Button) v.findViewById(R.id.contact_add_button);
+		final View v = inflater.inflate(R.layout.act_contact, container, false);
+		Button addButton = (Button) v.findViewById(R.id.contact_add);
 		final String[] contactList = getContact();
-		final ListView list = (ListView) v.findViewById(R.id.contact_list_listView);
+		final ListView list = (ListView) v.findViewById(R.id.contact_contactList);
 		final ContactItemAdapter adapter = new ContactItemAdapter(getActivity(), contactList);
 		list.setAdapter(adapter);
 		addButton.setOnClickListener(new Button.OnClickListener() {
 			@Override
 			public void onClick(View w) {
 				mDb = mHelper.getWritableDatabase();
-				EditText recipentName = (EditText) v.findViewById(R.id.contact_name_editText);
-				EditText recipentUserName = (EditText) v.findViewById(R.id.contact_username_editText);
+				EditText recipentName = (EditText) v.findViewById(R.id.contact_inputName);
+				EditText recipentUserName = (EditText) v.findViewById(R.id.contact_inputUsername);
 				Toast.makeText(getActivity(), recipentName.getText().toString(), Toast.LENGTH_SHORT)  
 				.show(); 
 				ContentValues c = new ContentValues();
@@ -146,6 +146,11 @@ public class ContactFragment extends Fragment {
 		super.onStop();
 	}
 
+	public void onDestory(){
+		super.onDestroy();
+		mDb.close();
+	}
+	
 	private static class ContactTag{
 		TextView mName;
 

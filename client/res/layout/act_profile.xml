@@ -7,14 +7,14 @@
     android:orientation="vertical" >
 
     <QuickContactBadge
-        android:id="@+id/quickContactBadge1"
+        android:id="@+id/profile_quickContactBadge1"
         android:layout_width="200dp"
         android:layout_height="200dp"
         android:layout_gravity="center"
         android:layout_marginTop="20dp" />
 
     <EditText
-        android:id="@+id/textDisplayName"
+        android:id="@+id/profile_textDisplayName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="20dp"
@@ -28,7 +28,7 @@
     </EditText>
 
     <Button
-        android:id="@+id/buttonChangeProfilePicture"
+        android:id="@+id/profile_buttonChangeProfilePicture"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginLeft="40dp"
@@ -36,7 +36,7 @@
         android:text="@string/editNamee" />
 
     <Button
-        android:id="@+id/buttonChangeDisplayName"
+        android:id="@+id/profile_buttonChangeDisplayName"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_marginLeft="40dp"

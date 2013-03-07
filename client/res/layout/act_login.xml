@@ -40,7 +40,7 @@
             android:orientation="vertical" >
 
             <EditText
-                android:id="@+id/username_text"
+                android:id="@+id/login_username"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="@string/prompt_email"
@@ -49,7 +49,7 @@
                 android:singleLine="true" />
 
             <EditText
-                android:id="@+id/password_text"
+                android:id="@+id/login_password"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="@string/prompt_password"
@@ -61,7 +61,7 @@
                 android:singleLine="true" />
 
             <Button
-                android:id="@+id/sign_in_button"
+                android:id="@+id/login_signin"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"

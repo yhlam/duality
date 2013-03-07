@@ -1,6 +1,5 @@
 package com.duality.client.decap;
 
-import com.duality.client.ProfileActivity;
 import com.duality.client.R;
 import com.duality.client.R.id;
 import com.duality.client.R.layout;
@@ -41,7 +40,7 @@ public class DecapMain extends Activity {
 			@Override
 			public void onClick(View v) {
 				// TODO Auto-generated method stub
-				startActivity(new Intent(DecapMain.this, ProfileActivity.class));
+				startActivity(new Intent(DecapMain.this, DecapProfile.class));
 			}
 
 		});
