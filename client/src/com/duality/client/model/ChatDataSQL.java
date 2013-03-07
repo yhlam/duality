@@ -1,4 +1,4 @@
-package com.duality.client;
+package com.duality.client.model;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
@@ -27,42 +27,36 @@ public class ChatDataSQL extends SQLiteOpenHelper {
 	public void onCreate(SQLiteDatabase db) {
 		// TODO Auto-generated method stub
 		String DATABASE_CREATE_TABLE =
-				"create table HIH("
+				"create table Messages("
 						+ "_ID INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL,"
-						+ "date VARCHAR,"
-						+ "note VARCHAR,"
-						+ "pw VARCHAR,"
-						+ "reminder INT,"
-						+ "type VARCHAR,"
-						+ "memo VARCHAR"
+						+ "sender VARCHAR,"
+						+ "recipent VARCHAR,"
+						+ "message VARCHAR"
 						+ ")";
 
 		db.execSQL(DATABASE_CREATE_TABLE);
-	}
-	public void createTable(SQLiteDatabase db, String tableName){
-		String DATABASE_CREATE_TABLE =
-				"create table " +  tableName + "("
+		
+		String DATABASE_CREATE_TABLE2 =
+				"create table Recipents("
 						+ "_ID INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL,"
-						+ "date VARCHAR,"
-						+ "note VARCHAR,"
-						+ "pw VARCHAR,"
-						+ "reminder INT,"
-						+ "type VARCHAR,"
-						+ "memo VARCHAR"
+						+ "name VARCHAR,"
+						+ "username VARCHAR"
 						+ ")";
 
-		db.execSQL(DATABASE_CREATE_TABLE);
+		db.execSQL(DATABASE_CREATE_TABLE2);
+
 	}
 
 	@Override
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 		// TODO Auto-generated method stub
-		 
+		 db.execSQL("DROP TABLE IF EXISTS Messages");
+		 db.execSQL("DROP TABLE IF EXISTS Recipents");
+		 onCreate(db);
 	}
 	@Override
 	public void onOpen(SQLiteDatabase db) {     
 		super.onOpen(db);       
-		// TODO 每次成功打開數據庫後首先被執行     
 	} 
 
 	@Override

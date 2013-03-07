@@ -1,4 +1,4 @@
-package com.duality.client;
+package com.duality.client.decap;
 
 import java.util.ArrayList;
 
@@ -13,6 +13,11 @@ import org.jivesoftware.smack.packet.Packet;
 import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smack.util.StringUtils;
 
+import com.duality.client.R;
+import com.duality.client.R.id;
+import com.duality.client.R.layout;
+import com.duality.client.R.menu;
+
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
@@ -25,7 +30,7 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
-public class GTalk_Activity extends Activity {
+public class DecapGTalk extends Activity {
 	private Handler mThreadHandler;
 	private HandlerThread mThread;
 	private XMPPConnection xmpp;

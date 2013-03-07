@@ -4,49 +4,9 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity" >
 
-    <TabHost
-        android:id="@android:id/tabhost"
+    <LinearLayout
+        android:id="@+id/context"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentTop="true" >
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical" >
-
-            <TabWidget
-                android:id="@android:id/tabs"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" >
-            </TabWidget>
-
-            <FrameLayout
-                android:id="@android:id/tabcontent"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" >
-
-                <fragment
-                    android:id="@+id/tab1"
-                    android:name="com.duality.client.Tab1Fragment"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent" />
-
-                <fragment
-                    android:id="@+id/tab2"
-                    android:name="com.duality.client.Tab2Fragment"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent" />
-
-                <fragment
-                    android:id="@+id/tab3"
-                    android:name="com.duality.client.Tab3Fragment"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent" />
-                    
-            </FrameLayout>
-        </LinearLayout>
-    </TabHost>
+        android:layout_height="match_parent" />
 
 </RelativeLayout>

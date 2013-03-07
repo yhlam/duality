@@ -1,4 +1,10 @@
-package com.duality.client;
+package com.duality.client.decap;
+
+import com.duality.client.ProfileActivity;
+import com.duality.client.R;
+import com.duality.client.R.id;
+import com.duality.client.R.layout;
+import com.duality.client.R.menu;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -12,7 +18,7 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 
-public class Main_Activity extends Activity {
+public class DecapMain extends Activity {
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -24,7 +30,7 @@ public class Main_Activity extends Activity {
 			@Override
 			public void onClick(View v) {
 				// TODO Auto-generated method stub
-				startActivity(new Intent(Main_Activity.this, About_Activity.class));
+				startActivity(new Intent(DecapMain.this, DecapAbout.class));
 			} 
 
 		});
@@ -35,7 +41,7 @@ public class Main_Activity extends Activity {
 			@Override
 			public void onClick(View v) {
 				// TODO Auto-generated method stub
-				startActivity(new Intent(Main_Activity.this, Profile_Activity.class));
+				startActivity(new Intent(DecapMain.this, ProfileActivity.class));
 			}
 
 		});
@@ -63,7 +69,7 @@ public class Main_Activity extends Activity {
 			@Override
 			public void onClick(View v) {
 				// TODO Auto-generated method stub
-				startActivity(new Intent(Main_Activity.this, GTalk_Activity.class));
+				startActivity(new Intent(DecapMain.this, DecapGTalk.class));
 			}
 
 		});

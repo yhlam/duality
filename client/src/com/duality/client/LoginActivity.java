@@ -5,6 +5,8 @@ import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.Presence;
 
+import com.duality.client.model.XMPPManager;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -16,25 +18,24 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-public class Login_Activity extends Activity {
+public class LoginActivity extends Activity {
 	private Handler mThreadHandler;
 	private HandlerThread mThread;
-	private XMPPConnection xmpp;
-	private ConnectionConfiguration connect;
-	private EditText username;
-	private EditText pwd;
-	private Button signIn;
+	private XMPPConnection mXmpp;
+	private ConnectionConfiguration mConnect;
+	private EditText mUsername;
+	private EditText mPwd;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_login);
+		// Initialized Views
+		mUsername = (EditText) this.findViewById(R.id.username_text);
+		mPwd = (EditText) this.findViewById(R.id.password_text);
 
-		username = (EditText) this.findViewById(R.id.username_text);
-		pwd = (EditText) this.findViewById(R.id.password_text);
-		signIn = (Button) this.findViewById(R.id.sign_in_button);
+		Button signIn = (Button) this.findViewById(R.id.sign_in_button);
 		signIn.setOnClickListener(new Button.OnClickListener(){
-
 			@Override
 			public void onClick(View v) {
 				// TODO Auto-generated method stub
@@ -47,19 +48,27 @@ public class Login_Activity extends Activity {
 		});
 	}
 
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		// Inflate the menu; this adds items to the action bar if it is present.
+		getMenuInflater().inflate(R.menu.activity_login, menu);
+		return true;
+	}
+
 	private Runnable connection = new Runnable(){
 
 		@Override
 		public void run() {
 			// TODO Auto-generated method stub
-			connect = new ConnectionConfiguration("talk.google.com", 5222, "gmail.com");
-			xmpp = new XMPPConnection(connect);
+			mConnect = new ConnectionConfiguration("talk.google.com", 5222, "gmail.com");
+			mXmpp = new XMPPConnection(mConnect);
 			try{
-				xmpp.connect();
-				xmpp.login(username.getText().toString(), pwd.getText().toString());
-				Presence presence = new Presence(Presence.Type.available);
-				xmpp.sendPacket(presence);
-				startActivity(new Intent(Login_Activity.this, Main2_Activity.class));
+				mXmpp.connect();
+				mXmpp.login(mUsername.getText().toString(), mPwd.getText().toString());
+				mXmpp.sendPacket(new Presence(Presence.Type.available));
+				XMPPManager.singleton().setXMPPConnection(mXmpp);
+				XMPPManager.singleton().setUsername(mUsername.getText().toString());
+				startActivity(new Intent(LoginActivity.this, MainActivity.class));
 			}catch(XMPPException e){
 				Toast.makeText(getApplicationContext(),
 						"Connection Failed", Toast.LENGTH_LONG)
@@ -69,13 +78,5 @@ public class Login_Activity extends Activity {
 		}
 
 	};
-
-
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.activity_login, menu);
-		return true;
-	}
 
 }
