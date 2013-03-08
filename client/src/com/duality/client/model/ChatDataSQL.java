@@ -31,7 +31,8 @@ public class ChatDataSQL extends SQLiteOpenHelper {
 						+ "_ID INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL,"
 						+ "sender VARCHAR,"
 						+ "recipent VARCHAR,"
-						+ "message VARCHAR"
+						+ "message VARCHAR,"
+						+ "sendtime STRING"						
 						+ ")";
 
 		db.execSQL(DATABASE_CREATE_TABLE);

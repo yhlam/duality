@@ -1,6 +1,8 @@
 package com.duality.client;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 import org.jivesoftware.smack.packet.Message;
 
@@ -27,7 +29,7 @@ public class ChatlogActivity extends Activity {
 	private String recipentName;
 	private String recipentUsername;
 	private String dbName = "ChatDatabase";
-//	private String recipentTable = "Recipents";
+	//	private String recipentTable = "Recipents";
 	private String messagesTable = "Messages";
 
 	private ArrayList<String> mMessages = new ArrayList<String>();
@@ -39,18 +41,18 @@ public class ChatlogActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.act_chatlog);
-		
+
 		Intent intent = getIntent();
 		recipentName = (String) intent.getExtras().getString("name");
-		
+
 		TextView contactName = (TextView) findViewById(R.id.chatlog_recipentName);
 		Button sendMessage = (Button) this.findViewById(R.id.chatlog_send);
 		final EditText message = (EditText) this.findViewById(R.id.chatlog_typeMessage);
 		mMessageList = (ListView) this.findViewById(R.id.chatlog_chatlog);
-		
+
 		contactName.setText(recipentName);
 		setListAdapter();
-		
+
 		sendMessage.setOnClickListener(new OnClickListener(){
 
 			@Override
@@ -68,10 +70,8 @@ public class ChatlogActivity extends Activity {
 					c.put("recipent	", recipentUsername);
 					c.put("message", text);
 					c.put("sender", XMPPManager.singleton().getUsername());
-					//					SimpleDateFormat dateFormatter =  new SimpleDateFormat("yyyy MMM dd");
-					//					SimpleDateFormat timeFormatter = new SimpleDateFormat("hh:mm:ss");
-					//					c.put("sendTime", timeFormatter.format(new Date()).toString());
-					//					c.put("date", dateFormatter.format(new Date()).toString());
+					SimpleDateFormat dateTimeFormatter =  new SimpleDateFormat("yyyy-MMM-dd hh:mm:ss");
+					c.put("sendtime", dateTimeFormatter.format(new Date()).toString());
 					long isInserted = mDb.insert(messagesTable, "", c);
 					if(isInserted == -1){
 
@@ -102,6 +102,7 @@ public class ChatlogActivity extends Activity {
 		mMessages = showContactHistory();
 		setListAdapter();
 	}
+	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(R.menu.activity_main_layout, menu);
@@ -120,20 +121,9 @@ public class ChatlogActivity extends Activity {
 
 	private ArrayList<String> showContactHistory(){
 		mDb = mHelper.getReadableDatabase();
-		Cursor cursor = mDb.rawQuery("select message from Messages WHERE recipent=? AND sender=?", new String[]{String.valueOf(recipentUsername), String.valueOf(XMPPManager.singleton().getUsername())});
+		Cursor cursor = mDb.rawQuery("select message from Messages WHERE ((recipent=? AND sender=?) OR (recipent=? AND sender=?)) ORDER BY _ID, datetime(sendtime)", new String[]{String.valueOf(recipentUsername), String.valueOf(XMPPManager.singleton().getUsername()), String.valueOf(XMPPManager.singleton().getUsername()),String.valueOf(recipentUsername)});
 		ArrayList<String> temp = new ArrayList<String>();
 		int row_count = cursor.getCount();
-		if(row_count != 0){
-			cursor.moveToFirst();
-			for(int i = 0; i<row_count;i++){
-				String string = cursor.getString(0);
-				temp.add(string);
-				cursor.moveToNext();
-			}
-		}
-		cursor.close();
-		cursor = mDb.rawQuery("select message from Messages WHERE sender=? AND recipent=?", new String[]{String.valueOf(recipentUsername), String.valueOf(XMPPManager.singleton().getUsername())});
-		row_count = cursor.getCount();
 		if(row_count != 0){
 			cursor.moveToFirst();
 			for(int i = 0; i<row_count;i++){

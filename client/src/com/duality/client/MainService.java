@@ -1,5 +1,8 @@
 package com.duality.client;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 import org.jivesoftware.smack.PacketListener;
 import org.jivesoftware.smack.filter.MessageTypeFilter;
 import org.jivesoftware.smack.filter.PacketFilter;
@@ -59,6 +62,8 @@ public class MainService extends Service {
 						c.put("sender", senderUsername);
 						c.put("recipent", XMPPManager.singleton().getUsername());
 						c.put("message", text);
+						SimpleDateFormat dateTimeFormatter =  new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+						c.put("sendtime", dateTimeFormatter.format(new Date()));
 						// Put into database
 						mDb = mHelper.getWritableDatabase();
 						long isInserted = mDb.insert(messagesTable, "", c);
@@ -77,21 +82,21 @@ public class MainService extends Service {
 	}
 
 	private void showNotification(String senderUsername, String text){
-		
+
 		Intent intent = new Intent(this, MainActivity.class);
 		PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
 		Notification notification = new Notification.Builder(this)
 		.setSmallIcon(R.drawable.ic_launcher)
 		.setContentTitle(senderUsername)
 		.setContentText(text)
-//		.setContentInfo("信息"), should be time
+		//		.setContentInfo("信息"), should be time
 		.setTicker(senderUsername + ": " + text)
-//		.setLights(0xFFFFFFFF, 1000, 1000)
+		//		.setLights(0xFFFFFFFF, 1000, 1000)
 		.setContentIntent(pendingIntent)
 		.setAutoCancel(true)
 		.getNotification();
 		mNtfMgr.notify(NOTIFICATION_ID, notification);
-		
+
 	}
 
 	public void onDestory(){
