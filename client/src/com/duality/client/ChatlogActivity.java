@@ -7,8 +7,11 @@ import java.util.Date;
 import org.jivesoftware.smack.packet.Message;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
@@ -33,6 +36,7 @@ public class ChatlogActivity extends Activity {
 	private String messagesTable = "Messages";
 
 	private ArrayList<String> mMessages = new ArrayList<String>();
+	private ArrayAdapter<String> adapter;
 	private ListView mMessageList;
 	SQLiteDatabase mDb;
 	ChatDataSQL mHelper;
@@ -78,7 +82,7 @@ public class ChatlogActivity extends Activity {
 					}else{
 						mMessages.add(XMPPManager.singleton().getXMPPConnection().getUser() + ":" );
 						mMessages.add(text);
-						setListAdapter();
+						adapter.notifyDataSetChanged();
 					}
 				}catch (Exception e){
 					e.printStackTrace();
@@ -95,6 +99,11 @@ public class ChatlogActivity extends Activity {
 			recipentUsername = cursor.getString(0);
 		}
 		cursor.close();
+		
+		String MESSAGE_RECEIVED = "MESSAGE_RECEIVED";
+		IntentFilter filter = new IntentFilter(MESSAGE_RECEIVED);
+		ChatlogReceiver receiver = new ChatlogReceiver();
+		registerReceiver(receiver, filter);
 	}	
 
 	public void onStart(){
@@ -115,7 +124,7 @@ public class ChatlogActivity extends Activity {
 	}
 
 	private void setListAdapter() {
-		ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, R.layout.multi_line_list_item, R.id.contact_history_text, mMessages); 
+		adapter = new ArrayAdapter<String>(this, R.layout.multi_line_list_item, R.id.contact_history_text, mMessages); 
 		mMessageList.setAdapter(adapter);
 	}
 
@@ -134,6 +143,17 @@ public class ChatlogActivity extends Activity {
 		}
 		cursor.close();
 		return temp;
+	}
+	private class ChatlogReceiver extends BroadcastReceiver{
+
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			// TODO Auto-generated method stub
+			Bundle bundle = intent.getExtras();
+			mMessages.add(bundle.getString("text"));
+			adapter.notifyDataSetChanged();
+		}
+		
 	}
 
 }

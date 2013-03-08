@@ -17,6 +17,7 @@ import android.app.Service;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.Bundle;
 import android.os.IBinder;
 
 import com.duality.client.model.ChatDataSQL;
@@ -71,6 +72,13 @@ public class MainService extends Service {
 
 						}else{
 							showNotification(senderUsername, text);
+							String MESSAGE_RECEIVED = "MESSAGE_RECEIVED";
+							Intent i = new Intent(MESSAGE_RECEIVED);
+							Bundle bundle = new Bundle();
+							bundle.putString("text", text);
+							i.putExtras(bundle);
+							sendBroadcast(i);
+							
 						}
 
 					}

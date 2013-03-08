@@ -27,6 +27,8 @@ public class ContactFragment extends Fragment {
 	public String recipents_table_name = "Recipents";
 	public String messages_table_name = "Messages";
 	
+	private ContactItemAdapter mAdapter;
+	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -116,8 +118,8 @@ public class ContactFragment extends Fragment {
 		Button addButton = (Button) v.findViewById(R.id.contact_add);
 		final String[] contactList = getContact();
 		final ListView list = (ListView) v.findViewById(R.id.contact_contactList);
-		final ContactItemAdapter adapter = new ContactItemAdapter(getActivity(), contactList);
-		list.setAdapter(adapter);
+		mAdapter = new ContactItemAdapter(getActivity(), contactList);
+		list.setAdapter(mAdapter);
 		addButton.setOnClickListener(new Button.OnClickListener() {
 			@Override
 			public void onClick(View w) {
@@ -134,7 +136,7 @@ public class ContactFragment extends Fragment {
 					Toast.makeText(getActivity(), "Insertion failed", Toast.LENGTH_SHORT)  
 					.show(); 
 				}else{
-					//adapter.notifyDataSetChanged();
+					mAdapter.notifyDataSetChanged();
 				}
 			}
 		});
