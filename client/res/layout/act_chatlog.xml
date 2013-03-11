@@ -1,0 +1,43 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ChatActivity" >
+
+    <TextView
+        android:id="@+id/chatlog_recipentName"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content" />
+
+    <ListView
+        android:id="@+id/chatlog_chatlog"
+        android:layout_width="wrap_content"
+        android:layout_height="480px"
+        android:layout_below="@+id/chatlog_recipentName"
+        android:layout_weight="1" 
+         android:scrollbars="horizontal"/>
+
+    <EditText
+        android:id="@+id/chatlog_typeMessage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/chatlog_chatlog"
+        android:layout_marginBottom="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:ems="10"
+        android:hint="@string/hintTypeMessage"
+        android:inputType="text" >
+    </EditText>
+
+    <Button
+        android:id="@+id/chatlog_send"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/chatlog_typeMessage"
+        android:layout_marginBottom="10dp"
+        android:layout_marginLeft="40dp"
+        android:layout_marginRight="40dp"
+        android:text="@string/chatlog_send" />
+
+</RelativeLayout>

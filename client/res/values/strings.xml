@@ -1,8 +1,42 @@
 <resources>
 
-    <string name="app_name">Duality</string>
-    <string name="hello_world">Hello world!</string>
+    
+    <string name="app_name">Duality Messenger v0.1</string>
+    <string name="app_name_about">About Us</string>
+    <string name="app_name_profile">My Profile</string>
     <string name="menu_settings">Settings</string>
-    <string name="title_activity_duality_contact">DualityContact</string>
+    
+    <!-- Main -->
+    <string name="test_content">Main_Activity</string>
+    <string name="about_us">About us</string>
+    <string name="my_profile">My Profile</string>
 
+    <!-- About_us -->
+    <string name="about_content">About_Activity</string>
+    
+    <!-- My_Profile -->
+    <string name="profile_content">Profile_Activity</string>
+    
+    <!-- GTalk -->
+    <string name="setting">Settings</string>
+    
+    <!-- Testing Purpose -->
+    <string name="beta_test">For Testing</string>
+    
+
+    <!-- New Strings -->
+    <string name="hello_world">Hello world!</string>
+    <string name="title_activity_main">MainActivity</string>
+    <string name="tab_profile">Profile</string>
+    <string name="tab_aboutus">About Us</string>
+    <string name="title_activity_profile">ProfileActivity</string>
+    <string name="title_activity_chat">ChatActivity</string>
+    <string name="buttonProfile">Profile</string>
+    <string name="buttonAboutUs">About Us</string>
+    <string name="editPicture">Edit Picture</string>
+    <string name="editNamee">Edit Name</string>
+    <string name="about_aboutUs">"This is the best project existing in the universe. We will get A Range for sure."</string>
+    <string name="chatlog_send">Send</string>
+    <string name="hintTypeMessage">Type your message here.</string>
+    <string name="contact_add">Add Users</string>
 </resources>
