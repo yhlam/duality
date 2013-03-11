@@ -60,7 +60,7 @@ public class LoginActivity extends Activity {
 		@Override
 		public void run() {
 			// TODO Auto-generated method stub
-			mConnect = new ConnectionConfiguration("talk.google.com", 5222, "gmail.com");
+			mConnect = new ConnectionConfiguration("143.89.211.23", 5222, "fyp");
 			mXmpp = new XMPPConnection(mConnect);
 			try{
 				mXmpp.connect();

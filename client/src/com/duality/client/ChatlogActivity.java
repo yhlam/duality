@@ -38,8 +38,10 @@ public class ChatlogActivity extends Activity {
 	private ArrayList<String> mMessages = new ArrayList<String>();
 	private ArrayAdapter<String> adapter;
 	private ListView mMessageList;
+	private ChatlogReceiver receiver;
 	SQLiteDatabase mDb;
 	ChatDataSQL mHelper;
+	
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -102,7 +104,7 @@ public class ChatlogActivity extends Activity {
 		
 		String MESSAGE_RECEIVED = "MESSAGE_RECEIVED";
 		IntentFilter filter = new IntentFilter(MESSAGE_RECEIVED);
-		ChatlogReceiver receiver = new ChatlogReceiver();
+		receiver = new ChatlogReceiver();
 		registerReceiver(receiver, filter);
 	}	
 
@@ -121,6 +123,7 @@ public class ChatlogActivity extends Activity {
 	public void onStop(){
 		super.onStop();
 		mDb.close();
+		unregisterReceiver(receiver);
 	}
 
 	private void setListAdapter() {

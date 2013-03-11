@@ -146,6 +146,7 @@ public class ContactFragment extends Fragment {
 
 	public void onStop(){
 		super.onStop();
+		mDb.close();
 	}
 
 	public void onDestory(){
