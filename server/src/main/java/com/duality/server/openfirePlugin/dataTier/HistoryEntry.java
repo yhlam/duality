@@ -17,9 +17,8 @@ public class HistoryEntry {
 	private final double receiverlatitude;
 	private final double receiverLongtitude;
 
-	public HistoryEntry(final long id, final String sender, final String receiver, final Date time, final String message,
-			final double senderlatitude, final double senderLongtitude,
-			final double receiverlatitude, final double receiverLongtitude) {
+	public HistoryEntry(final long id, final String sender, final String receiver, final Date time, final String message, final double senderlatitude,
+			final double senderLongtitude, final double receiverlatitude, final double receiverLongtitude) {
 		this.id = id;
 		this.sender = sender;
 		this.receiver = receiver;

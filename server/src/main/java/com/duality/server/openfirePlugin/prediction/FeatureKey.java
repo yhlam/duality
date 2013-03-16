@@ -41,7 +41,7 @@ public abstract class FeatureKey<T> {
 	 * @param context Context map
 	 * @return Casted value of the feature
 	 */
-	public T getValue(final Map<FeatureKey<?>, ?> context) {
+	public T getValue(final Map<? extends FeatureKey<?>, ?> context) {
 		final Object value = context.get(this);
 		final T casted = cls.cast(value);
 		return casted;

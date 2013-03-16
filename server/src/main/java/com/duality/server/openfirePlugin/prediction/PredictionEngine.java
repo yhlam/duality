@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.duality.server.openfirePlugin.dataTier.HistoryEntry;
+import com.duality.server.openfirePlugin.prediction.impl.TfIdfNgramPredictionEngine;
 
 public abstract class PredictionEngine {
 	private static PredictionEngine instance = createPredictionEngine();
@@ -22,7 +23,7 @@ public abstract class PredictionEngine {
 	 * @return A new instance of PredictionEngine
 	 */
 	private static PredictionEngine createPredictionEngine() {
-		return null;
+		return new TfIdfNgramPredictionEngine();
 	}
 	
 	/**

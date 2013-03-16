@@ -1,6 +1,5 @@
 package com.duality.server.openfirePlugin.prediction.impl;
 
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -11,23 +10,19 @@ import com.duality.server.openfirePlugin.dataTier.HistoryDatabaseAdapter;
 import com.duality.server.openfirePlugin.dataTier.HistoryEntry;
 import com.duality.server.openfirePlugin.prediction.FeatureKey;
 import com.duality.server.openfirePlugin.prediction.PredictionEngine;
-import com.duality.server.openfirePlugin.prediction.impl.ClientContextKey.Location;
+import com.duality.server.openfirePlugin.prediction.impl.key.TfIdfKey;
+import com.duality.server.openfirePlugin.prediction.impl.key.VectorSpaceFeatureKey;
+import com.duality.server.openfirePlugin.prediction.impl.store.NgramStore;
+import com.duality.server.openfirePlugin.prediction.impl.store.TfIdfStore;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.MinMaxPriorityQueue;
-import com.google.common.collect.Multiset;
 import com.google.common.collect.Sets;
 
 public class TfIdfNgramPredictionEngine extends PredictionEngine {
 	private static final int MAX_PREDICTION_NUM = 10;
 
-	private final TfIdfStore tfIdfStore;
-
 	public TfIdfNgramPredictionEngine() {
-		final HistoryDatabaseAdapter database = HistoryDatabaseAdapter.singleton();
-		final List<HistoryEntry> histories = database.getAllHistory();
-
-		tfIdfStore = new TfIdfStore(histories);
 	}
 
 	@Override
@@ -38,18 +33,29 @@ public class TfIdfNgramPredictionEngine extends PredictionEngine {
 		for (final HistoryEntry history : histories) {
 			final Map<FeatureKey<?>, Object> features = extractFeatures(history);
 			final long id = history.getId();
-			final double cosine = cosine(context, features);
-			final MessageCloseness messageCloseness = new MessageCloseness(id, cosine);
+			final double closeness = dotProduct(context, features);
+			final MessageCloseness messageCloseness = new MessageCloseness(id, closeness);
 			queue.add(messageCloseness);
 		}
 
 		final List<String> predictions = Lists.newArrayListWithCapacity(queue.size());
-		for (final MessageCloseness closeness : queue) {
+
+		while (!queue.isEmpty()) {
+			final MessageCloseness closeness = queue.poll();
 			final long id = closeness.getId();
 			// TODO: Change it to get next message when the method is available
 			final HistoryEntry nextHistory = historyDb.getHistoryById(id);
-			final String message = nextHistory.getMessage();
-			predictions.add(message);
+			if (nextHistory != null) {
+				final String message = nextHistory.getMessage();
+				if (incompletedMessage == null || message.startsWith(incompletedMessage)) {
+					predictions.add(message);
+				}
+			}
+		}
+
+		if (predictions.isEmpty()) {
+			// TODO: use n-gram here
+			// final String[] split = incompletedMessage.split(" ");
 		}
 
 		return predictions;
@@ -57,41 +63,60 @@ public class TfIdfNgramPredictionEngine extends PredictionEngine {
 
 	@Override
 	public void addHistoryData(final HistoryEntry history) {
-		tfIdfStore.add(history);
 	}
 
 	private Map<FeatureKey<?>, Object> extractFeatures(final HistoryEntry entry) {
 		final Map<FeatureKey<?>, Object> features = Maps.newHashMap();
 		final long id = entry.getId();
-		final Multiset<List<String>> termFrequencies = tfIdfStore.getTermFrequencies(id);
 
-		final String message = entry.getMessage();
-		final String[] tokens = message.split(" ");
-		for (final String token : tokens) {
-			final List<String> phrase = Collections.singletonList(token);
-			final int df = tfIdfStore.getDocumentFrequency(phrase);
-			final int tf = termFrequencies.count(df);
-			final double tfIdf = tf / (double) df;
-			final TfIdfKey tfIdfKey = new TfIdfKey(phrase);
+		final NgramStore ngramStore = NgramStore.singleton();
+		final Set<List<String>> ngrams = ngramStore.getAllNgrams();
+
+		final String[] tokens = MessageUtils.extractTokens(entry);
+		final Set<List<String>> ngramSet = Sets.newHashSet();
+
+		for (int start = 0; start < tokens.length; start++) {
+			final int maxLength = tokens.length - start;
+			for (int length = 1; length <= maxLength; length++) {
+				final List<String> ngram = Lists.newArrayListWithCapacity(length);
+
+				final int end = start + length;
+				for (int i = start; i < end; i++) {
+					ngram.add(tokens[i]);
+				}
+
+				if (ngrams.contains(ngram)) {
+					ngramSet.add(ngram);
+				}
+			}
+		}
+
+		final TfIdfStore tfIdfStore = TfIdfStore.singleton();
+		for (final List<String> ngram : ngramSet) {
+			final double idf = tfIdfStore.getInvertedDocumentFrequency(ngram);
+			final double tf = tfIdfStore.getTermFrequency(id, ngram);
+			final double tfIdf = tf * idf;
+			final TfIdfKey tfIdfKey = new TfIdfKey(ngram);
 			features.put(tfIdfKey, tfIdf);
 		}
 
-		final String sender = entry.getSender();
-		features.put(ClientContextKey.SENDER, sender);
-
-		final String receiver = entry.getReceiver();
-		features.put(ClientContextKey.RECEIVER, receiver);
-
-		final double senderLatitude = entry.getSenderlatitude();
-		final double senderLongtitude = entry.getSenderLongtitude();
-		features.put(ClientContextKey.SENDER_LOCATION, new Location(senderLatitude, senderLongtitude));
-
-		final double receiverLatitude = entry.getReceiverlatitude();
-		final double receiverLongtitude = entry.getReceiverLongtitude();
-		features.put(ClientContextKey.RECEIVER_LOCATION, new Location(receiverLatitude, receiverLongtitude));
-
-		final Date time = entry.getTime();
-		features.put(ClientContextKey.TIME, time);
+		// FIXME: Think a way to assign weighting on TF-IDF
+		// final String sender = entry.getSender();
+		// features.put(UserKey.SENDER, sender);
+		//
+		// final String receiver = entry.getReceiver();
+		// features.put(UserKey.RECEIVER, receiver);
+		//
+		// final double senderLatitude = entry.getSenderlatitude();
+		// final double senderLongtitude = entry.getSenderLongtitude();
+		// features.put(ClientContextKey.SENDER_LOCATION, new Location(senderLatitude, senderLongtitude));
+		//
+		// final double receiverLatitude = entry.getReceiverlatitude();
+		// final double receiverLongtitude = entry.getReceiverLongtitude();
+		// features.put(ClientContextKey.RECEIVER_LOCATION, new Location(receiverLatitude, receiverLongtitude));
+		//
+		// final Date time = entry.getTime();
+		// features.put(ClientContextKey.TIME, time);
 
 		return features;
 	}
@@ -103,54 +128,53 @@ public class TfIdfNgramPredictionEngine extends PredictionEngine {
 		final Set<FeatureKey<?>> intersaction = Sets.newHashSet(featuresKeySet);
 		intersaction.retainAll(contextKeySet);
 
-		double dotProduct = 0.0;
-		for (final FeatureKey<?> key : intersaction) {
-			final Object dataValue = features.get(key);
-			final Object contextValue = context.get(key);
-			final double product = multiply(key, contextValue, dataValue);
-			dotProduct += product;
-		}
-
-		if (dotProduct == 0.0) {
-			return 0.0;
-		}
+		final double dotProduct = dotProduct(context, features, intersaction);
 
 		final Set<Entry<FeatureKey<?>, Object>> entrySet = features.entrySet();
 		double sumOfProducts = 0.0;
 		for (final Entry<FeatureKey<?>, Object> entry : entrySet) {
 			final FeatureKey<?> key = entry.getKey();
-			final Object value = entry.getValue();
-			final double product = multiply(key, value, value);
-			sumOfProducts += product;
+
+			if (key instanceof VectorSpaceFeatureKey) {
+				@SuppressWarnings("rawtypes")
+				final VectorSpaceFeatureKey vectorSpaceFeatureKey = (VectorSpaceFeatureKey) key;
+				final Object value = entry.getValue();
+				@SuppressWarnings("unchecked")
+				final double product = vectorSpaceFeatureKey.multiply(value, value);
+				sumOfProducts += product;
+			}
 		}
 
 		return dotProduct / sumOfProducts;
 	}
 
-	private double multiply(final FeatureKey<?> key, final Object value1, final Object value2) {
-		final Class<?> type = key.getType();
-		if (type.isAssignableFrom(Number.class)) {
-			final double doubleValue1 = ((Number) value1).doubleValue();
-			final double doubleValue2 = ((Number) value2).doubleValue();
-			return doubleValue1 * doubleValue2;
-		} else if (type.isAssignableFrom(String.class)) {
-			return value1.equals(value2) ? 1 : 0;
-		} else if (type.isAssignableFrom(Date.class)) {
-			final long time1 = ((Date) value1).getTime();
-			final long time2 = ((Date) value2).getTime();
-			return time1 * time2;
-		} else if (type.isAssignableFrom(Location.class)) {
-			final Location loc1 = (Location) value1;
-			final Location loc2 = (Location) value2;
-			final double latitude1 = loc1.getLatitude();
-			final double latitude2 = loc2.getLatitude();
-			final double longtitude1 = loc1.getLongtitude();
-			final double longtitude2 = loc2.getLongtitude();
+	private double dotProduct(final Map<FeatureKey<?>, Object> context, final Map<FeatureKey<?>, Object> features) {
+		final Set<FeatureKey<?>> contextKeySet = context.keySet();
+		final Set<FeatureKey<?>> featuresKeySet = features.keySet();
 
-			return latitude1 * latitude2 + longtitude1 * longtitude2;
+		final Set<FeatureKey<?>> intersaction = Sets.newHashSet(featuresKeySet);
+		intersaction.retainAll(contextKeySet);
+
+		final double dotProduct = dotProduct(context, features, intersaction);
+		return dotProduct;
+	}
+
+	private double dotProduct(final Map<FeatureKey<?>, Object> context, final Map<FeatureKey<?>, Object> features, final Set<FeatureKey<?>> intersaction) {
+		double dotProduct = 0.0;
+		for (final FeatureKey<?> key : intersaction) {
+			if (key instanceof VectorSpaceFeatureKey) {
+				@SuppressWarnings("rawtypes")
+				final VectorSpaceFeatureKey vectorSpaceFeatureKey = (VectorSpaceFeatureKey) key;
+				@SuppressWarnings("unchecked")
+				final double product = vectorSpaceFeatureKey.multiply(context, features);
+				dotProduct += product;
+			}
 		}
 
-		throw new RuntimeException("Unsupported feature type: " + type + " in " + key);
+		if (dotProduct == 0.0) {
+			return 0.0;
+		}
+		return dotProduct;
 	}
 
 	private static class MessageCloseness implements Comparable<MessageCloseness> {
@@ -168,13 +192,18 @@ public class TfIdfNgramPredictionEngine extends PredictionEngine {
 
 		@Override
 		public int compareTo(final MessageCloseness that) {
-			if (this.closeness < that.closeness) {
+			if (this.closeness > that.closeness) {
 				return -1;
 			} else if (this.closeness == that.closeness) {
 				return 0;
 			} else {
 				return 1;
 			}
+		}
+
+		@Override
+		public String toString() {
+			return "{id: " + id + ", closeness: " + closeness + "}";
 		}
 	}
 }
