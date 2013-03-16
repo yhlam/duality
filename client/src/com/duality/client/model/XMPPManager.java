@@ -6,6 +6,8 @@ public class XMPPManager {
 
 	private XMPPConnection mXmpp;
 	private String mUsername;
+	private String mDomain;
+	private String mServerIP;
 	private static final XMPPManager INSTANCE = new XMPPManager();
 	
 	private XMPPManager(){
@@ -23,11 +25,28 @@ public class XMPPManager {
 	public void setUsername(String username){
 		mUsername = username;
 	}
+	
+	public void setDomain(String domain){
+		mDomain = domain;
+	}
+	
+	public void setServerIP(String ip){
+		mServerIP = ip;
+	}
+	
 	public XMPPConnection getXMPPConnection(){
 		return mXmpp;
 	}
 	
 	public String getUsername(){
 		return mUsername;
+	}
+	
+	public String getDomain(){
+		return mDomain;
+	}
+	
+	public String getServerIP(){
+		return mServerIP;
 	}
 }

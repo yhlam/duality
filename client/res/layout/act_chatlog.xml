@@ -12,17 +12,22 @@
     <ListView
         android:id="@+id/chatlog_chatlog"
         android:layout_width="wrap_content"
-        android:layout_height="480px"
+        android:layout_height="460px"
         android:layout_below="@+id/chatlog_recipentName"
-        android:layout_weight="1" 
-         android:scrollbars="horizontal"/>
+        android:layout_weight="1"
+        android:scrollbars="horizontal" />
+
+    <Spinner
+        android:id="@+id/chatlog_prediction"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/chatlog_chatlog" />
 
     <EditText
         android:id="@+id/chatlog_typeMessage"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/chatlog_chatlog"
-        android:layout_marginBottom="10dp"
+        android:layout_below="@+id/chatlog_prediction"
         android:layout_marginLeft="10dp"
         android:layout_marginRight="10dp"
         android:ems="10"

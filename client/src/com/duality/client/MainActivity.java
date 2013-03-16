@@ -20,20 +20,20 @@ public class MainActivity extends Activity {
 		actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
 		actionBar.setDisplayShowTitleEnabled(false);
 		
+		Tab contactTab = actionBar.newTab().setText("Contact");
+		ActionBarTabListener contactListener = new ActionBarTabListener(new ContactFragment());
+		contactTab.setTabListener(contactListener);		
+		
 		Tab profileTab = actionBar.newTab().setText("Profile");
 		ActionBarTabListener profileListener = new ActionBarTabListener(new ProfileFragment());
 		profileTab.setTabListener(profileListener);
-		
-		Tab contactTab = actionBar.newTab().setText("Contact");
-		ActionBarTabListener contactListener = new ActionBarTabListener(new ContactFragment());
-		contactTab.setTabListener(contactListener);
-		
+				
 		Tab aboutTab = actionBar.newTab().setText("About");
 		ActionBarTabListener aboutListener = new ActionBarTabListener(new AboutFragment());
 		aboutTab.setTabListener(aboutListener);
 		
-		actionBar.addTab(profileTab);
 		actionBar.addTab(contactTab);
+		actionBar.addTab(profileTab);
 		actionBar.addTab(aboutTab);
 		
 		Intent intent = new Intent(MainActivity.this, MainService.class);
@@ -45,6 +45,19 @@ public class MainActivity extends Activity {
 		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.activity_main, menu);
 		return true;
+	}
+	
+	@Override
+	public void onStop(){
+		super.onStop();
+		
+	}
+	
+	@Override
+	public void onDestroy(){
+		super.onDestroy();
+		Intent intent = new Intent(MainActivity.this, MainService.class);
+		stopService(intent);
 	}
 	
 	class ActionBarTabListener implements TabListener{

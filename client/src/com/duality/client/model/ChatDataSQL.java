@@ -40,6 +40,7 @@ public class ChatDataSQL extends SQLiteOpenHelper {
 		String DATABASE_CREATE_TABLE2 =
 				"create table Recipents("
 						+ "_ID INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL,"
+						+ "sender VARCHAR,"
 						+ "name VARCHAR,"
 						+ "username VARCHAR"
 						+ ")";
