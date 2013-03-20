@@ -1,17 +1,22 @@
 package com.duality.server.openfirePlugin.prediction.impl.store;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import com.duality.server.openfirePlugin.dataTier.HistoryDatabaseAdapter;
 import com.duality.server.openfirePlugin.dataTier.HistoryEntry;
-import com.duality.server.openfirePlugin.prediction.impl.MessageUtils;
+import com.duality.server.openfirePlugin.prediction.impl.TfIdfUtils;
+import com.duality.server.openfirePlugin.prediction.impl.feature.AtomicFeature;
+import com.duality.server.openfirePlugin.prediction.impl.feature.AtomicFeaturesManager;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Multiset.Entry;
+import com.google.common.collect.Sets;
 
 public class TfIdfStore {
 	private static final TfIdfStore INSTANCE = new TfIdfStore();
@@ -20,61 +25,52 @@ public class TfIdfStore {
 		return INSTANCE;
 	}
 
-	private Map<List<String>, List<TermFrequency>> tfDf;
+	private Map<Set<AtomicFeature<?>>, List<TermFrequency>> tfDf;
 	private int totalCount;
-	
+
 	private TfIdfStore() {
 		refresh();
 	}
-	
+
 	public void refresh() {
-		final Map<List<String>, List<TermFrequency>> tfDf = Maps.newHashMap();
-		
-		final NgramStore ngramStore = NgramStore.singleton();
-		final Set<List<String>> ngrams = ngramStore.getAllNgrams();
+		final Map<Set<AtomicFeature<?>>, List<TermFrequency>> tfDf = Maps.newHashMap();
+
+		final FPStore fsStore = FPStore.singleton();
+		final Set<Set<AtomicFeature<?>>> frequetPatterns = fsStore.getFrequetPatterns();
+		final AtomicFeaturesManager atomicFeaturesManager = AtomicFeaturesManager.singleton();
 
 		final HistoryDatabaseAdapter historyDb = HistoryDatabaseAdapter.singleton();
 		final List<HistoryEntry> allHistory = historyDb.getAllHistory();
 		for (final HistoryEntry history : allHistory) {
 			final long id = history.getId();
-			
-			final String[] tokens = MessageUtils.extractTokens(history);
-			final Multiset<List<String>> tf = HashMultiset.create();
-			
-			for(int start=0; start<tokens.length; start++) {
-				final int maxLength = tokens.length - start;
-				for(int length=1; length<=maxLength; length++) {
-					final List<String> ngram = Lists.newArrayListWithCapacity(length);
-					
-					final int end = start + length;
-					for(int i=start; i<end; i++) {
-						ngram.add(tokens[i]);
-					}
-					
-					if(ngrams.contains(ngram)) {
-						tf.add(ngram);
-					}
+
+			final Multiset<Set<AtomicFeature<?>>> tf = HashMultiset.create();
+			final List<AtomicFeature<?>> features = atomicFeaturesManager.constructFeatures(history);
+			final Set<Set<AtomicFeature<?>>> combinations = TfIdfUtils.combinations(features);
+			for (final Set<AtomicFeature<?>> group : combinations) {
+				if (frequetPatterns.contains(group)) {
+					tf.add(group);
 				}
 			}
-			
-			if(!tf.isEmpty()) {
+
+			if (!tf.isEmpty()) {
 				double maxCount = 0;
-				final Set<Entry<List<String>>> entrySet = tf.entrySet();
-				for (Entry<List<String>> entry : entrySet) {
+				final Set<Entry<Set<AtomicFeature<?>>>> entrySet = tf.entrySet();
+				for (final Entry<Set<AtomicFeature<?>>> entry : entrySet) {
 					final int count = entry.getCount();
-					if(count > maxCount) {
+					if (count > maxCount) {
 						maxCount = count;
 					}
 				}
 
-				for (Entry<List<String>> entry : entrySet) {
-					final List<String> ngram = entry.getElement();
+				for (final Entry<Set<AtomicFeature<?>>> entry : entrySet) {
+					final Set<AtomicFeature<?>> ngram = entry.getElement();
 					List<TermFrequency> tfList = tfDf.get(ngram);
-					if(tfList == null) {
+					if (tfList == null) {
 						tfList = Lists.newLinkedList();
 						tfDf.put(ngram, tfList);
 					}
-					
+
 					final int count = entry.getCount();
 					final double normalizedTf = count / maxCount;
 					final TermFrequency termFrequency = new TermFrequency(id, normalizedTf);
@@ -82,27 +78,27 @@ public class TfIdfStore {
 				}
 			}
 		}
-		
+
 		this.tfDf = tfDf;
 		this.totalCount = allHistory.size();
 	}
 
-	public double getInvertedDocumentFrequency(List<String> phrase) {
-		final List<TermFrequency> tfList = tfDf.get(phrase);
+	public double getInvertedDocumentFrequency(final Set<AtomicFeature<?>> compoundFeature) {
+		final List<TermFrequency> tfList = tfDf.get(compoundFeature);
 		final double df = tfList.size();
 		final double idf = Math.log(totalCount / df);
 		return idf;
 	}
-	
-	public double getTermFrequency(final long id, final List<String> phrase) {
-		final List<TermFrequency> tfList = tfDf.get(phrase);
-		if(tfList == null) {
+
+	public double getTermFrequency(final long id, final Set<AtomicFeature<?>> compoundFeature) {
+		final List<TermFrequency> tfList = tfDf.get(compoundFeature);
+		if (tfList == null) {
 			return 0;
 		}
-		
-		for (TermFrequency termFrequency : tfList) {
+
+		for (final TermFrequency termFrequency : tfList) {
 			final long documentId = termFrequency.getDocumentId();
-			if(documentId == id) {
+			if (documentId == id) {
 				final double frequency = termFrequency.getFrequency();
 				return frequency;
 			}
@@ -111,11 +107,11 @@ public class TfIdfStore {
 		return 0;
 	}
 
-	public List<TermFrequency> getRelevantTermFrequencies(final List<String> phrase) {
-		final List<TermFrequency> tfs = tfDf.get(phrase);
+	public List<TermFrequency> getRelevantTermFrequencies(final Set<AtomicFeature<?>> compoundFeature) {
+		final List<TermFrequency> tfs = tfDf.get(compoundFeature);
 		return tfs;
 	}
-	
+
 	public static class TermFrequency {
 		private final long id;
 		private final double tf;

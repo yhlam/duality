@@ -1,5 +1,6 @@
 package com.duality.server.openfirePlugin.prediction.impl.key;
 
+import com.duality.server.openfirePlugin.prediction.impl.feature.VectorSpaceFeatureKey;
 import com.duality.server.openfirePlugin.prediction.impl.key.LocationKey.Location;
 
 public class LocationKey extends VectorSpaceFeatureKey<Location> {

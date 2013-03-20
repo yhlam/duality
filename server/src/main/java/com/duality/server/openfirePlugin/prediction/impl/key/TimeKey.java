@@ -2,6 +2,8 @@ package com.duality.server.openfirePlugin.prediction.impl.key;
 
 import java.util.Date;
 
+import com.duality.server.openfirePlugin.prediction.impl.feature.VectorSpaceFeatureKey;
+
 public class TimeKey extends VectorSpaceFeatureKey<Date> {
 	private static final TimeKey INSTANCE = new TimeKey();
 

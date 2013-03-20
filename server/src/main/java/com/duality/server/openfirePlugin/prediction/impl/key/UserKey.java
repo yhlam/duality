@@ -1,5 +1,7 @@
 package com.duality.server.openfirePlugin.prediction.impl.key;
 
+import com.duality.server.openfirePlugin.prediction.impl.feature.VectorSpaceFeatureKey;
+
 public class UserKey extends VectorSpaceFeatureKey<String> {
 
 	public static final UserKey SENDER = new UserKey("SENDER");

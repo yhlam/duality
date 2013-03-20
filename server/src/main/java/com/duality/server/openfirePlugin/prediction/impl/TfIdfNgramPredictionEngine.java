@@ -10,9 +10,11 @@ import com.duality.server.openfirePlugin.dataTier.HistoryDatabaseAdapter;
 import com.duality.server.openfirePlugin.dataTier.HistoryEntry;
 import com.duality.server.openfirePlugin.prediction.FeatureKey;
 import com.duality.server.openfirePlugin.prediction.PredictionEngine;
-import com.duality.server.openfirePlugin.prediction.impl.key.TfIdfKey;
-import com.duality.server.openfirePlugin.prediction.impl.key.VectorSpaceFeatureKey;
-import com.duality.server.openfirePlugin.prediction.impl.store.NgramStore;
+import com.duality.server.openfirePlugin.prediction.impl.feature.AtomicFeature;
+import com.duality.server.openfirePlugin.prediction.impl.feature.AtomicFeaturesManager;
+import com.duality.server.openfirePlugin.prediction.impl.feature.TfIdfKey;
+import com.duality.server.openfirePlugin.prediction.impl.feature.VectorSpaceFeatureKey;
+import com.duality.server.openfirePlugin.prediction.impl.store.FPStore;
 import com.duality.server.openfirePlugin.prediction.impl.store.TfIdfStore;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -66,59 +68,33 @@ public class TfIdfNgramPredictionEngine extends PredictionEngine {
 	}
 
 	private Map<FeatureKey<?>, Object> extractFeatures(final HistoryEntry entry) {
-		final Map<FeatureKey<?>, Object> features = Maps.newHashMap();
+		final Map<FeatureKey<?>, Object> tfIdfs = Maps.newHashMap();
 		final long id = entry.getId();
 
-		final NgramStore ngramStore = NgramStore.singleton();
-		final Set<List<String>> ngrams = ngramStore.getAllNgrams();
+		final FPStore fpStore = FPStore.singleton();
+		final Set<Set<AtomicFeature<?>>> frequetPatterns = fpStore.getFrequetPatterns();
 
-		final String[] tokens = MessageUtils.extractTokens(entry);
-		final Set<List<String>> ngramSet = Sets.newHashSet();
+		final AtomicFeaturesManager atomicFeaturesManager = AtomicFeaturesManager.singleton();
+		final List<AtomicFeature<?>> features = atomicFeaturesManager.constructFeatures(entry);
+		final Set<Set<AtomicFeature<?>>> compoundFeatures = Sets.newHashSet();
 
-		for (int start = 0; start < tokens.length; start++) {
-			final int maxLength = tokens.length - start;
-			for (int length = 1; length <= maxLength; length++) {
-				final List<String> ngram = Lists.newArrayListWithCapacity(length);
-
-				final int end = start + length;
-				for (int i = start; i < end; i++) {
-					ngram.add(tokens[i]);
-				}
-
-				if (ngrams.contains(ngram)) {
-					ngramSet.add(ngram);
-				}
+		final Set<Set<AtomicFeature<?>>> combinations = TfIdfUtils.combinations(features);
+		for (final Set<AtomicFeature<?>> group : combinations) {
+			if (frequetPatterns.contains(group)) {
+				compoundFeatures.add(group);
 			}
 		}
 
 		final TfIdfStore tfIdfStore = TfIdfStore.singleton();
-		for (final List<String> ngram : ngramSet) {
-			final double idf = tfIdfStore.getInvertedDocumentFrequency(ngram);
-			final double tf = tfIdfStore.getTermFrequency(id, ngram);
+		for (final Set<AtomicFeature<?>> feature : compoundFeatures) {
+			final double idf = tfIdfStore.getInvertedDocumentFrequency(feature);
+			final double tf = tfIdfStore.getTermFrequency(id, feature);
 			final double tfIdf = tf * idf;
-			final TfIdfKey tfIdfKey = new TfIdfKey(ngram);
-			features.put(tfIdfKey, tfIdf);
+			final TfIdfKey tfIdfKey = TfIdfKey.getKey(feature);
+			tfIdfs.put(tfIdfKey, tfIdf);
 		}
 
-		// FIXME: Think a way to assign weighting on TF-IDF
-		// final String sender = entry.getSender();
-		// features.put(UserKey.SENDER, sender);
-		//
-		// final String receiver = entry.getReceiver();
-		// features.put(UserKey.RECEIVER, receiver);
-		//
-		// final double senderLatitude = entry.getSenderlatitude();
-		// final double senderLongtitude = entry.getSenderLongtitude();
-		// features.put(ClientContextKey.SENDER_LOCATION, new Location(senderLatitude, senderLongtitude));
-		//
-		// final double receiverLatitude = entry.getReceiverlatitude();
-		// final double receiverLongtitude = entry.getReceiverLongtitude();
-		// features.put(ClientContextKey.RECEIVER_LOCATION, new Location(receiverLatitude, receiverLongtitude));
-		//
-		// final Date time = entry.getTime();
-		// features.put(ClientContextKey.TIME, time);
-
-		return features;
+		return tfIdfs;
 	}
 
 	private double cosine(final Map<FeatureKey<?>, Object> context, final Map<FeatureKey<?>, Object> features) {

@@ -1,4 +1,4 @@
-package com.duality.server.openfirePlugin.prediction.impl.key;
+package com.duality.server.openfirePlugin.prediction.impl.feature;
 
 import java.util.Map;
 
