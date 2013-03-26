@@ -61,13 +61,7 @@ public class FPStore {
 		// Remove the non-frequent features
 		final int minSupport = (int) (totalSize * MIN_SUPPORT);
 		final Set<Entry<AtomicFeature<?>>> counts = featureCount.entrySet();
-		final Set<AtomicFeature<?>> frequentNode = FluentIterable.from(counts).filter(new Predicate<Entry<AtomicFeature<?>>>() {
-			@Override
-			public boolean apply(final Entry<AtomicFeature<?>> input) {
-				final int count = input.getCount();
-				return count >= minSupport;
-			}
-		}).transform(new Function<Entry<AtomicFeature<?>>, AtomicFeature<?>>() {
+		final Set<AtomicFeature<?>> frequentNode = FluentIterable.from(counts).transform(new Function<Entry<AtomicFeature<?>>, AtomicFeature<?>>() {
 			@Override
 			public AtomicFeature<?> apply(final Entry<AtomicFeature<?>> input) {
 				return input.getElement();
@@ -103,6 +97,13 @@ public class FPStore {
 			}
 		}
 
+		final Set<Set<AtomicFeature<?>>> fp = Sets.<Set<AtomicFeature<?>>>newHashSet();
+		
+		final Set<AtomicFeature<?>> allAtomicFeatures = nodeTable.keySet();
+		for (AtomicFeature<?> feature : allAtomicFeatures) {
+			fp.add(Collections.<AtomicFeature<?>>singleton(feature));
+		}
+		
 		final Comparator<AtomicFeature<?>> comparator = new Comparator<AtomicFeature<?>>() {
 
 			@Override
@@ -112,7 +113,6 @@ public class FPStore {
 				return count1 - count2;
 			}
 		};
-		final Set<Set<AtomicFeature<?>>> fp = Sets.<Set<AtomicFeature<?>>> newHashSet();
 		fpGrowth(tree, minSupport, comparator, nodeTable, Collections.<AtomicFeature<?>> emptySet(), fp);
 
 		this.fp = fp;
@@ -124,7 +124,7 @@ public class FPStore {
 
 	private void fpGrowth(final FPNode tree, final int minSupport, final Comparator<AtomicFeature<?>> comparator, final Multimap<AtomicFeature<?>, FPNode> nodeTable,
 			final Set<AtomicFeature<?>> prefix, final Set<Set<AtomicFeature<?>>> fp) {
-		final ImmutableList<AtomicFeature<?>> leastFreqNode = FluentIterable.from(nodeTable.keys()).toSortedList(comparator);
+		final ImmutableList<AtomicFeature<?>> leastFreqNode = FluentIterable.from(nodeTable.keySet()).toSortedList(comparator);
 
 		for (final AtomicFeature<?> leafFeature : leastFreqNode) {
 			final Collection<FPNode> nodeList = nodeTable.get(leafFeature);
@@ -154,17 +154,19 @@ public class FPStore {
 
 			for (final AtomicFeature<?> feature : toRemove) {
 				final Collection<FPNode> nodes = conditionalNodeTable.get(feature);
-				for (final FPNode node : nodes) {
-					final FPNode parent = node.getParent();
-					final List<FPNode> parentChildren = parent.getChildren();
-					final List<FPNode> children = node.getChildren();
-					for (final FPNode child : children) {
-						child.setParent(parent);
-						parentChildren.add(child);
+				if(nodes != null) {
+					for (final FPNode node : nodes) {
+						final FPNode parent = node.getParent();
+						final List<FPNode> parentChildren = parent.getChildren();
+						final List<FPNode> children = node.getChildren();
+						for (final FPNode child : children) {
+							child.setParent(parent);
+							parentChildren.add(child);
+						}
+						parentChildren.remove(node);
 					}
-					parentChildren.remove(node);
+					conditionalNodeTable.removeAll(feature);
 				}
-				conditionalNodeTable.removeAll(feature);
 			}
 
 			final FPNode condRoot = conditionalNodes.get(tree);
@@ -180,9 +182,7 @@ public class FPStore {
 				}
 
 				if (singlePath) {
-					final List<AtomicFeature<?>> finalPath = Lists.newLinkedList();
-					finalPath.addAll(prefix);
-
+					final List<AtomicFeature<?>> finalPath = Lists.newArrayList();
 					List<FPNode> childen = condRoot.getChildren();
 					while (!childen.isEmpty()) {
 						final FPNode child = childen.get(0);
@@ -192,15 +192,20 @@ public class FPStore {
 					}
 
 					final Set<Set<AtomicFeature<?>>> combinations = TfIdfUtils.combinations(finalPath);
-					fp.addAll(combinations);
+					for (Set<AtomicFeature<?>> comb : combinations) {
+						comb.addAll(prefix);
+						comb.add(leafFeature);
+						fp.add(comb);
+					}
 				} else {
 					for (final AtomicFeature<?> feature : freqFeatures) {
-						final Set<AtomicFeature<?>> newFp = Sets.newHashSet(prefix);
+						final Set<AtomicFeature<?>> newFp = Sets.newHashSet();
+						newFp.addAll(prefix);
+						newFp.add(leafFeature);
 						newFp.add(feature);
 						fp.add(newFp);
-
-						fpGrowth(condRoot, minSupport, comparator, conditionalNodeTable, newFp, fp);
 					}
+					fpGrowth(condRoot, minSupport, comparator, conditionalNodeTable, Collections.<AtomicFeature<?>>singleton(leafFeature), fp);
 				}
 			}
 		}
@@ -311,7 +316,16 @@ public class FPStore {
 
 		@Override
 		public String toString() {
-			return "{feature: " + feature + ", count: " + count + ", children: " + children + "}";
+			final StringBuilder stringBuilder = new StringBuilder();
+			stringBuilder.append("{feature: ").append(feature);
+			stringBuilder.append(", count: ").append(count);
+			stringBuilder.append(", children: [");
+			for (FPNode child : children) {
+				final AtomicFeature<?> childFeature = child.getFeature();
+				stringBuilder.append(childFeature).append(", ");
+			};
+			stringBuilder.append("]}");
+			return  stringBuilder.toString();
 		}
 	}
 }

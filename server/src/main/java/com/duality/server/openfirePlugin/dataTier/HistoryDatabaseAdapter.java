@@ -7,7 +7,7 @@ import java.util.List;
  */
 // TODO (Terry): Think about do we need to build a cache to improve performance
 public class HistoryDatabaseAdapter {
-	private static final HistoryDatabaseAdapter INSTANCE = null;
+	private static final HistoryDatabaseAdapter INSTANCE = new HistoryDatabaseAdapter();
 
 	/**
 	 * @return An instance of HistoryDatabaseAdapter
@@ -48,5 +48,4 @@ public class HistoryDatabaseAdapter {
 	public void addHistory(final HistoryEntry entry) {
 		// TODO (Terry): Write the history entry to database
 	}
-
 }

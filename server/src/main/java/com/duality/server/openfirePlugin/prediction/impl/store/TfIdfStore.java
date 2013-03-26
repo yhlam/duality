@@ -1,16 +1,14 @@
 package com.duality.server.openfirePlugin.prediction.impl.store;
 
-import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import com.duality.server.openfirePlugin.dataTier.HistoryDatabaseAdapter;
 import com.duality.server.openfirePlugin.dataTier.HistoryEntry;
-import com.duality.server.openfirePlugin.prediction.impl.TfIdfUtils;
 import com.duality.server.openfirePlugin.prediction.impl.feature.AtomicFeature;
 import com.duality.server.openfirePlugin.prediction.impl.feature.AtomicFeaturesManager;
-import com.google.common.collect.Collections2;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -46,10 +44,11 @@ public class TfIdfStore {
 
 			final Multiset<Set<AtomicFeature<?>>> tf = HashMultiset.create();
 			final List<AtomicFeature<?>> features = atomicFeaturesManager.constructFeatures(history);
-			final Set<Set<AtomicFeature<?>>> combinations = TfIdfUtils.combinations(features);
-			for (final Set<AtomicFeature<?>> group : combinations) {
-				if (frequetPatterns.contains(group)) {
-					tf.add(group);
+			final HashSet<AtomicFeature<?>> featureSet = Sets.newHashSet(features);
+			for (Set<AtomicFeature<?>> fp: frequetPatterns) {
+				final boolean hasFp = featureSet.containsAll(fp);
+				if (hasFp) {
+					tf.add(Sets.newCopyOnWriteArraySet(fp));
 				}
 			}
 
@@ -85,7 +84,7 @@ public class TfIdfStore {
 
 	public double getInvertedDocumentFrequency(final Set<AtomicFeature<?>> compoundFeature) {
 		final List<TermFrequency> tfList = tfDf.get(compoundFeature);
-		final double df = tfList.size();
+		final double df = tfList == null ? 1 : tfList.size();
 		final double idf = Math.log(totalCount / df);
 		return idf;
 	}

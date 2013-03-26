@@ -1,6 +1,6 @@
 package com.duality.server.openfirePlugin.prediction.impl;
 
-import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -76,12 +76,13 @@ public class TfIdfNgramPredictionEngine extends PredictionEngine {
 
 		final AtomicFeaturesManager atomicFeaturesManager = AtomicFeaturesManager.singleton();
 		final List<AtomicFeature<?>> features = atomicFeaturesManager.constructFeatures(entry);
-		final Set<Set<AtomicFeature<?>>> compoundFeatures = Sets.newHashSet();
+		final HashSet<AtomicFeature<?>> featureSet = Sets.newHashSet(features);
+		final List<Set<AtomicFeature<?>>> compoundFeatures = Lists.newLinkedList();
 
-		final Set<Set<AtomicFeature<?>>> combinations = TfIdfUtils.combinations(features);
-		for (final Set<AtomicFeature<?>> group : combinations) {
-			if (frequetPatterns.contains(group)) {
-				compoundFeatures.add(group);
+		for (final Set<AtomicFeature<?>> fp : frequetPatterns) {
+			final boolean containsFp = featureSet.containsAll(fp);
+			if (containsFp) {
+				compoundFeatures.add(fp);
 			}
 		}
 
