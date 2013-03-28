@@ -2,18 +2,27 @@ package com.duality.server.openfirePlugin.prediction.impl.feature;
 
 import java.util.List;
 
+import org.tartarus.snowball.ext.EnglishStemmer;
+
+import opennlp.tools.tokenize.SimpleTokenizer;
+
 import com.duality.server.openfirePlugin.dataTier.HistoryEntry;
 import com.duality.server.openfirePlugin.prediction.impl.TfIdfUtils;
 import com.duality.server.openfirePlugin.prediction.impl.feature.AtomicFeature.FeatureType;
 
 public class TokenFeaturesProvider implements AtomicFeaturesProvider {
+	private static final SimpleTokenizer TOKENIZER = SimpleTokenizer.INSTANCE;
 
 	public static String[] extractTokens(final String message) {
-		final String[] tokens = message.split("\\W+");
+		final EnglishStemmer stemmer = new EnglishStemmer();
+		final String[] tokens = TOKENIZER.tokenize(message);
 		for (int i = 0; i < tokens.length; i++) {
 			final String token = tokens[i];
 			final String lowerCase = token.toLowerCase();
-			tokens[i] = lowerCase;
+			stemmer.setCurrent(lowerCase);
+			stemmer.stem();
+			final String stemmed = stemmer.getCurrent();
+			tokens[i] = stemmed;
 		}
 
 		return tokens;
