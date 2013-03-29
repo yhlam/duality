@@ -7,30 +7,26 @@ import java.util.Date;
  */
 // TODO (Terry): Reverify the fields base on history database schema, add or remove them if needed
 public class HistoryEntry {
-	private final long id;
+	private final int id;
 	private final String sender;
 	private final String receiver;
 	private final Date time;
 	private final String message;
-	private final double senderlatitude;
-	private final double senderLongtitude;
-	private final double receiverlatitude;
-	private final double receiverLongtitude;
+	private final Location senderLocation;
+	private final Location receiverLocation;
 
-	public HistoryEntry(final long id, final String sender, final String receiver, final Date time, final String message, final double senderlatitude,
-			final double senderLongtitude, final double receiverlatitude, final double receiverLongtitude) {
+	public HistoryEntry(final int id, final String sender, final String receiver, final Date time, final String message,
+			final Location senderLocation, final Location receiverLocation) {
 		this.id = id;
 		this.sender = sender;
 		this.receiver = receiver;
 		this.time = time;
 		this.message = message;
-		this.senderlatitude = senderlatitude;
-		this.senderLongtitude = senderLongtitude;
-		this.receiverlatitude = receiverlatitude;
-		this.receiverLongtitude = receiverLongtitude;
+		this.senderLocation = senderLocation;
+		this.receiverLocation = receiverLocation;
 	}
 
-	public long getId() {
+	public int getId() {
 		return id;
 	}
 
@@ -49,21 +45,12 @@ public class HistoryEntry {
 	public String getMessage() {
 		return message;
 	}
-
-	public double getSenderlatitude() {
-		return senderlatitude;
+	
+	public Location getSenderLocation() {
+		return senderLocation;
 	}
-
-	public double getSenderLongtitude() {
-		return senderLongtitude;
+	
+	public Location getReceiverLocation() {
+		return receiverLocation;
 	}
-
-	public double getReceiverlatitude() {
-		return receiverlatitude;
-	}
-
-	public double getReceiverLongtitude() {
-		return receiverLongtitude;
-	}
-
 }

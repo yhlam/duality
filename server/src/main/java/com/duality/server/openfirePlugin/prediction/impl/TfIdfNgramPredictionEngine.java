@@ -8,6 +8,7 @@ import java.util.Set;
 
 import com.duality.server.openfirePlugin.dataTier.HistoryDatabaseAdapter;
 import com.duality.server.openfirePlugin.dataTier.HistoryEntry;
+import com.duality.server.openfirePlugin.dataTier.NewHistoryHandler;
 import com.duality.server.openfirePlugin.prediction.FeatureKey;
 import com.duality.server.openfirePlugin.prediction.PredictionEngine;
 import com.duality.server.openfirePlugin.prediction.impl.feature.AtomicFeature;
@@ -21,10 +22,12 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.MinMaxPriorityQueue;
 import com.google.common.collect.Sets;
 
-public class TfIdfNgramPredictionEngine extends PredictionEngine {
+public class TfIdfNgramPredictionEngine extends PredictionEngine implements NewHistoryHandler {
 	private static final int MAX_PREDICTION_NUM = 10;
 
 	public TfIdfNgramPredictionEngine() {
+		final HistoryDatabaseAdapter historyAdapter = HistoryDatabaseAdapter.singleton();
+		historyAdapter.register(this);
 	}
 
 	@Override
@@ -34,7 +37,7 @@ public class TfIdfNgramPredictionEngine extends PredictionEngine {
 		final MinMaxPriorityQueue<MessageCloseness> queue = MinMaxPriorityQueue.maximumSize(MAX_PREDICTION_NUM).create();
 		for (final HistoryEntry history : histories) {
 			final Map<FeatureKey<?>, Object> features = extractFeatures(history);
-			final long id = history.getId();
+			final int id = history.getId();
 			final double closeness = dotProduct(context, features);
 			final MessageCloseness messageCloseness = new MessageCloseness(id, closeness);
 			queue.add(messageCloseness);
@@ -44,7 +47,7 @@ public class TfIdfNgramPredictionEngine extends PredictionEngine {
 
 		while (!queue.isEmpty()) {
 			final MessageCloseness closeness = queue.poll();
-			final long id = closeness.getId();
+			final int id = closeness.getId();
 			// TODO: Change it to get next message when the method is available
 			final HistoryEntry nextHistory = historyDb.getHistoryById(id);
 			if (nextHistory != null) {
@@ -64,12 +67,13 @@ public class TfIdfNgramPredictionEngine extends PredictionEngine {
 	}
 
 	@Override
-	public void addHistoryData(final HistoryEntry history) {
+	public void onNewHistory(HistoryEntry newHistory) {
+		// TODO Auto-generated method stub
 	}
 
 	private Map<FeatureKey<?>, Object> extractFeatures(final HistoryEntry entry) {
 		final Map<FeatureKey<?>, Object> tfIdfs = Maps.newHashMap();
-		final long id = entry.getId();
+		final int id = entry.getId();
 
 		final FPStore fpStore = FPStore.singleton();
 		final Set<Set<AtomicFeature<?>>> frequetPatterns = fpStore.getFrequetPatterns();
@@ -155,15 +159,15 @@ public class TfIdfNgramPredictionEngine extends PredictionEngine {
 	}
 
 	private static class MessageCloseness implements Comparable<MessageCloseness> {
-		private final long id;
+		private final int id;
 		private final double closeness;
 
-		public MessageCloseness(final long id, final double closeness) {
+		public MessageCloseness(final int id, final double closeness) {
 			this.id = id;
 			this.closeness = closeness;
 		}
 
-		public long getId() {
+		public int getId() {
 			return id;
 		}
 

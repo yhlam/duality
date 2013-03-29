@@ -8,5 +8,5 @@
     <version>1.0.0</version>
     <minServerVersion>3.7.0</minServerVersion>
     <databaseKey>duality</databaseKey>
-    <databaseVersion>1</databaseVersion>
+    <databaseVersion>2</databaseVersion>
 </plugin>

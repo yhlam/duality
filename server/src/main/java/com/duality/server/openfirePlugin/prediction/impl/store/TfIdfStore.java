@@ -40,7 +40,7 @@ public class TfIdfStore {
 		final HistoryDatabaseAdapter historyDb = HistoryDatabaseAdapter.singleton();
 		final List<HistoryEntry> allHistory = historyDb.getAllHistory();
 		for (final HistoryEntry history : allHistory) {
-			final long id = history.getId();
+			final int id = history.getId();
 
 			final Multiset<Set<AtomicFeature<?>>> tf = HashMultiset.create();
 			final List<AtomicFeature<?>> features = atomicFeaturesManager.constructFeatures(history);
@@ -89,14 +89,14 @@ public class TfIdfStore {
 		return idf;
 	}
 
-	public double getTermFrequency(final long id, final Set<AtomicFeature<?>> compoundFeature) {
+	public double getTermFrequency(final int id, final Set<AtomicFeature<?>> compoundFeature) {
 		final List<TermFrequency> tfList = tfDf.get(compoundFeature);
 		if (tfList == null) {
 			return 0;
 		}
 
 		for (final TermFrequency termFrequency : tfList) {
-			final long documentId = termFrequency.getDocumentId();
+			final int documentId = termFrequency.getDocumentId();
 			if (documentId == id) {
 				final double frequency = termFrequency.getFrequency();
 				return frequency;
@@ -112,15 +112,15 @@ public class TfIdfStore {
 	}
 
 	public static class TermFrequency {
-		private final long id;
+		private final int id;
 		private final double tf;
 
-		public TermFrequency(final long id, final double tf) {
+		public TermFrequency(final int id, final double tf) {
 			this.id = id;
 			this.tf = tf;
 		}
 
-		public long getDocumentId() {
+		public int getDocumentId() {
 			return id;
 		}
 

@@ -3,6 +3,7 @@ package com.duality.server.openfirePlugin.prediction.impl.feature;
 import java.util.List;
 
 import com.duality.server.openfirePlugin.dataTier.HistoryEntry;
+import com.duality.server.openfirePlugin.dataTier.Location;
 import com.duality.server.openfirePlugin.prediction.impl.TfIdfUtils;
 import com.duality.server.openfirePlugin.prediction.impl.feature.AtomicFeature.FeatureType;
 
@@ -12,27 +13,33 @@ public class LocationFeaturesProvider implements AtomicFeaturesProvider {
 
 	@Override
 	public void constructFeatures(final HistoryEntry history, final List<AtomicFeature<?>> features) {
-		final double senderLatitude = history.getSenderlatitude();
-		final double senderLongtitude = history.getSenderLongtitude();
-		addLocationFeature(features, FeatureType.SENDER_LOCATION, senderLatitude, senderLongtitude);
+		final Location senderLocation = history.getSenderLocation();
+		if(senderLocation != null) {
+			final double senderLatitude = senderLocation.getLatitude();
+			final double senderLongtitude = senderLocation.getLongtitude();
+			addLocationFeature(features, FeatureType.SENDER_LOCATION, senderLatitude, senderLongtitude);
+		}
 
-		final double receiverLatitude = history.getReceiverlatitude();
-		final double receiverLongtitude = history.getReceiverLongtitude();
-		addLocationFeature(features, FeatureType.RECEIVER_LOCATION, receiverLatitude, receiverLongtitude);
+		final Location receiverLocation = history.getReceiverLocation();
+		if(receiverLocation != null) {
+			final double receiverLatitude = receiverLocation.getLatitude();
+			final double receiverLongtitude = receiverLocation.getLongtitude();
+			addLocationFeature(features, FeatureType.RECEIVER_LOCATION, receiverLatitude, receiverLongtitude);
+		}
 	}
 
 	private void addLocationFeature(final List<AtomicFeature<?>> features, final FeatureType type, final double latitude, final double longtitude) {
 		final int latSegment = (int) (latitude / UNIT_DEGREE);
 		final int longSegment = (int) (longtitude / UNIT_DEGREE);
-		final Location location = new Location(latSegment, longSegment);
+		final LocationSegment location = new LocationSegment(latSegment, longSegment);
 		TfIdfUtils.addAtomicFeature(features, type, location);
 	}
 
-	public static class Location {
+	public static class LocationSegment {
 		private final int latSegment;
 		private final int longSegment;
 
-		public Location(final int latSegment, final int longSegment) {
+		public LocationSegment(final int latSegment, final int longSegment) {
 			this.latSegment = latSegment;
 			this.longSegment = longSegment;
 		}
@@ -56,8 +63,8 @@ public class LocationFeaturesProvider implements AtomicFeaturesProvider {
 				return true;
 			}
 
-			if (obj instanceof Location) {
-				final Location that = (Location) obj;
+			if (obj instanceof LocationSegment) {
+				final LocationSegment that = (LocationSegment) obj;
 				return this.latSegment == that.latSegment && this.longSegment == that.longSegment;
 			}
 

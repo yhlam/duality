@@ -3,7 +3,6 @@ package com.duality.server.openfirePlugin.prediction;
 import java.util.List;
 import java.util.Map;
 
-import com.duality.server.openfirePlugin.dataTier.HistoryEntry;
 import com.duality.server.openfirePlugin.prediction.impl.TfIdfNgramPredictionEngine;
 
 public abstract class PredictionEngine {
@@ -32,10 +31,4 @@ public abstract class PredictionEngine {
 	 * @return List of ranked predictions
 	 */
 	public abstract List<String> getPredictions(Map<FeatureKey<?>, Object> context, String incompletedMessage);
-	
-	/**
-	 * Added a chat history to the prediction engine
-	 * @param history
-	 */
-	public abstract void addHistoryData(HistoryEntry history);
 }
