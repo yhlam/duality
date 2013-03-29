@@ -32,7 +32,7 @@ public class ChatlogImporter {
 
 	public static void main (String[] args) throws ClassNotFoundException{
 
-		ChatlogImporter importer = new ChatlogImporter("C:\\Users\\K\\Documents\\workspace\\ChatlogImporter\\logs");
+		ChatlogImporter importer = new ChatlogImporter("logs");
 
 		Class.forName("org.sqlite.JDBC");
 		String tempDb = "chatlog.db";
