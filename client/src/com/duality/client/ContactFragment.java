@@ -1,6 +1,7 @@
 package com.duality.client;
 
 import com.duality.client.model.ChatDataSQL;
+import com.duality.client.model.XMPPManager;
 
 import android.app.Fragment;
 import android.content.ContentValues;
@@ -97,7 +98,7 @@ public class ContactFragment extends Fragment {
 
 	public String[] getContact(){
 		mDb = mHelper.getReadableDatabase();
-		Cursor cursor = mDb.rawQuery("select name from Recipents ORDER BY _ID DESC", null);
+		Cursor cursor = mDb.rawQuery("select name from Recipents WHERE sender=? ORDER BY _ID DESC", new String[]{String.valueOf(XMPPManager.singleton().getUsername())});
 		String[] result = new String[cursor.getCount()];
 		int rows_num = cursor.getCount();
 		if(rows_num != 0) {
@@ -129,6 +130,7 @@ public class ContactFragment extends Fragment {
 				Toast.makeText(getActivity(), recipentName.getText().toString(), Toast.LENGTH_SHORT)  
 				.show(); 
 				ContentValues c = new ContentValues();
+				c.put("sender", XMPPManager.singleton().getUsername());
 				c.put("name", recipentName.getText().toString());
 				c.put("username", recipentUserName.getText().toString());
 				long isInserted = mDb.insert(recipents_table_name, "", c);
