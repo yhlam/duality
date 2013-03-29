@@ -32,8 +32,8 @@ public class HistoryPacketInterceptor implements PacketInterceptor {
 
 	private void recordMessage(final Message message) {
 		final Date now = new Date();
-		final String sender = message.getFrom().toString();
-		final String receiver = message.getTo().toString();
+		final String sender = message.getFrom().toBareJID();
+		final String receiver = message.getTo().toBareJID();
 		final String messageBody = message.getBody();
 
 		// TODO: Grab the locations
