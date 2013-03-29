@@ -15,8 +15,7 @@ public class ChatlogImporter {
 
 	public ChatlogImporter(String dir){
 		File file = new File(dir);
-		File[] files = file.listFiles();
-		parser = new ChatlogParser(files);
+		parser = new ChatlogParser(file);
 		list = parser.start();
 	}
 
@@ -42,7 +41,7 @@ public class ChatlogImporter {
 		int timeOut = 30;
 		// SQL Statements
 		String dropTable = "DROP TABLE if exists chatlog";
-		String makeTable = "CREATE TABLE chatlog (id numeric, date text, time text, ampm text, name text, message text)";
+		String makeTable = "CREATE TABLE chatlog (id numeric, datetime text, senderName text, recipentName text, message text)";
 
 		// Making Connection
 		Connection connection = null;
@@ -57,7 +56,7 @@ public class ChatlogImporter {
 			for (int i = 0; i < importer.getList().size(); i++){
 				MessageModel model = importer.getList().get(i); 
 				if(model!=null){
-					String insert = "INSERT INTO chatlog VALUES(" + (i+1) + ", '" + model.getDate() + "', '" + model.getTime() + "', '" + model.getAmpm() + "', '" + model.getName() + "', '" + model.getMessage() + "')";
+					String insert = "INSERT INTO chatlog VALUES(" + (i+1) + ", '" + model.getDateTime() + "', '"  + model.getSenderName() + "', '" + model.getRecipentName()  + "', '" + model.getMessage() + "')";
 					statement.executeUpdate(insert);
 				}
 			}
@@ -66,7 +65,9 @@ public class ChatlogImporter {
 			ResultSet rs = statement.executeQuery(query);
 			while(rs.next()){
 				System.out.print("id = " + rs.getInt("id"));
-				System.out.print(" name= " + rs.getString("name"));
+				System.out.print(" dateTime = " + rs.getString("dateTime"));
+				System.out.print(" senderName= " + rs.getString("senderName"));
+				System.out.print(" recipentName= " + rs.getString("recipentName"));
 				System.out.println(" message= " + rs.getString("message"));
 			}
 		} catch(SQLException e){

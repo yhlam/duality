@@ -1,18 +1,17 @@
 package com.chatlogimporter;
 
 public class MessageModel {
-	private String name;
+	private String senderName;
+	private String recipentName;
 	private String message;
-	private String date;
-	private String time;
-	private String ampm;
+	private String dateTime;
 	
-	public MessageModel(String n, String m, String d, String t, String a){
-		name = n;
+	public MessageModel(String n, String r, String m, String d){
+		senderName = n;
+		recipentName = r;
 		message = m;
-		date = d;
-		time = t;
-		ampm = a;
+		dateTime = d;
+
 	}
 	
 	public MessageModel() {
@@ -20,46 +19,37 @@ public class MessageModel {
 		// TODO Auto-generated constructor stub
 	}
 
-	public String getName(){
-		return name;
+	public String getSenderName() {
+		return senderName;
 	}
-	
-	public String getMessage(){
+
+	public void setSenderName(String senderName) {
+		this.senderName = senderName;
+	}
+
+	public String getRecipentName() {
+		return recipentName;
+	}
+
+	public void setRecipentName(String recipentName) {
+		this.recipentName = recipentName;
+	}
+
+	public String getMessage() {
 		return message;
-	}
-	
-	public String getDate(){
-		return date;
-	}
-	
-	public String getTime(){
-		return time;
-	}
-	
-	public String getAmpm(){
-		return ampm;
-	}
-	
-	public void setName(String n){
-		name = n;
-	}
-	
-	public void setDate(String d){
-		date = d;
-	}
-	
-	public void setTime(String t){
-		time = t;
 	}
 
 	public void setMessage(String message) {
 		this.message = message;
 	}
 
-	public void setAmpm(String ampm) {
-		this.ampm = ampm;
+	public String getDateTime() {
+		return dateTime;
 	}
-	
+
+	public void setDateTime(String dateTime) {
+		this.dateTime = dateTime;
+	}
 	
 }
 
