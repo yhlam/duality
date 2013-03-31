@@ -13,11 +13,6 @@ import org.jivesoftware.smack.packet.Packet;
 import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smack.util.StringUtils;
 
-import com.duality.client.R;
-import com.duality.client.R.id;
-import com.duality.client.R.layout;
-import com.duality.client.R.menu;
-
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
@@ -30,6 +25,8 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.duality.client.R;
+
 public class DecapGTalk extends Activity {
 	private Handler mThreadHandler;
 	private HandlerThread mThread;
@@ -39,7 +36,7 @@ public class DecapGTalk extends Activity {
 	private EditText receiver;
 	private EditText message;
 	private ListView sentMessage;
-	private ArrayList<String> messages = new ArrayList();
+	private ArrayList<String> messages = new ArrayList<String>();
 	private Handler mHandler = new Handler();
 	private EditText username;
 	private EditText password;
@@ -58,7 +55,6 @@ public class DecapGTalk extends Activity {
 
 			@Override
 			public void onClick(View v) {
-				// TODO Auto-generated method stub
 				mThread = new HandlerThread("name");
 				mThread.start();
 				mThreadHandler = new Handler(mThread.getLooper());
@@ -72,7 +68,6 @@ public class DecapGTalk extends Activity {
 
 			@Override
 			public void onClick(View v) {
-				// TODO Auto-generated method stub
 				String to = receiver.getText().toString();
 				String text = message.getText().toString();
 				Message msg = new Message(to, Message.Type.chat);
@@ -107,7 +102,6 @@ public class DecapGTalk extends Activity {
 
 		@Override
 		public void run() {
-			// TODO Auto-generated method stub
 			connect = new ConnectionConfiguration("talk.google.com", 5222, "gmail.com");
 			xmpp = new XMPPConnection(connect);
 			username = (EditText)findViewById(R.id.username);

@@ -8,7 +8,6 @@ import java.util.TimerTask;
 import org.jivesoftware.smack.PacketListener;
 import org.jivesoftware.smack.filter.MessageTypeFilter;
 import org.jivesoftware.smack.filter.PacketFilter;
-import org.jivesoftware.smack.packet.IQ;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Packet;
 import org.jivesoftware.smack.util.StringUtils;
@@ -28,6 +27,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 
 import com.duality.client.model.ChatDataSQL;
+import com.duality.client.model.LocationMessage;
 import com.duality.client.model.XMPPManager;
 
 public class MainService extends Service {
@@ -52,15 +52,15 @@ public class MainService extends Service {
 		super.onCreate();
 		mHelper = new ChatDataSQL(this, dbName);
 		mNtfMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-		mLocation = getLocation(this);
+		mLocation = getLocation();
 		
 		mTimer = new Timer(true);
 		// Sending out Presence Packet in a 10 seconds interval
 		mTimer.scheduleAtFixedRate(new TimedUpdater(), 10000, 10000);
 	}
 	
-	public Location getLocation(Context context){
-		LocationManager locMgr = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+	public Location getLocation(){
+		LocationManager locMgr = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 		Location loc = locMgr.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 		if(loc == null){
 			loc = locMgr.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
@@ -72,33 +72,13 @@ public class MainService extends Service {
 
 		@Override
 		public void run() {
-			// TODO Auto-generated method stub
-			
-			IQ iq = new IQ(){
-				@Override
-				public String getChildElementXML() {
-					// TODO Auto-generated method stub
-					return "<query xmlns='duality'>" +
-					"<longitude>" + mLocation.getLongitude() + "</longitude> " +
-					"<altitude>" + mLocation.getAltitude() + "</altitude> " +
-					"<latitude>" + mLocation.getLatitude() + "</latitude> " +
-					"<time>" + mLocation.getTime() + "</time> " +
-					"</query>" +
-					"</iq>";
-				}
-			};
-			iq.setType(IQ.Type.SET);
-			iq.setTo(XMPPManager.singleton().getDomain());
-			iq.setFrom(XMPPManager.singleton().getUsername());
-			XMPPManager.singleton().getXMPPConnection().sendPacket(iq);
-			
-//			Updating GPS via Presence
-//			final double longitude = mLocation.getLongitude();
-//			final double altitude = mLocation.getAltitude();
-//			final double latitude = mLocation.getLatitude();
-//			final long time = mLocation.getTime();
-//			GPSPresence packet = new GPSPresence(altitude, longitude, latitude, time, Presence.Type.available);
-//			XMPPManager.singleton().getXMPPConnection().sendPacket(packet);
+			// Updating GPS
+			final double longitude = mLocation.getLongitude();
+			final double latitude = mLocation.getLatitude();
+			final String domain = XMPPManager.singleton().getDomain();
+			final String username = XMPPManager.singleton().getUsername();
+			final LocationMessage packet = new LocationMessage(username, domain, longitude, latitude);
+			XMPPManager.singleton().getXMPPConnection().sendPacket(packet);
 		}
 
 	}

@@ -1,10 +1,5 @@
 package com.duality.client.decap;
 
-import com.duality.client.R;
-import com.duality.client.R.id;
-import com.duality.client.R.layout;
-import com.duality.client.R.menu;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -17,6 +12,8 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.duality.client.R;
+
 public class DecapMain extends Activity {
 
 	@Override
@@ -28,7 +25,6 @@ public class DecapMain extends Activity {
 
 			@Override
 			public void onClick(View v) {
-				// TODO Auto-generated method stub
 				startActivity(new Intent(DecapMain.this, DecapAbout.class));
 			} 
 
@@ -39,7 +35,6 @@ public class DecapMain extends Activity {
 
 			@Override
 			public void onClick(View v) {
-				// TODO Auto-generated method stub
 				startActivity(new Intent(DecapMain.this, DecapProfile.class));
 			}
 
@@ -53,7 +48,6 @@ public class DecapMain extends Activity {
 			@Override
 			public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
 					long arg3) {
-				// TODO Auto-generated method stub
 				Toast.makeText(getApplicationContext(),
 						"Click ListItem Number " + arg2, Toast.LENGTH_LONG)
 						.show();
@@ -67,7 +61,6 @@ public class DecapMain extends Activity {
 
 			@Override
 			public void onClick(View v) {
-				// TODO Auto-generated method stub
 				startActivity(new Intent(DecapMain.this, DecapGTalk.class));
 			}
 

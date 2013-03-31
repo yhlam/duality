@@ -1,12 +1,10 @@
 package com.duality.client.decap;
 
-import com.duality.client.R;
-import com.duality.client.R.layout;
-import com.duality.client.R.menu;
-
 import android.app.Activity;
 import android.os.Bundle;
 import android.view.Menu;
+
+import com.duality.client.R;
 
 public class DecapAbout extends Activity {
 

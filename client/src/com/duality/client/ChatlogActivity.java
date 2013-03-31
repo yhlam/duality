@@ -1,10 +1,28 @@
 package com.duality.client;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.jivesoftware.smack.PacketListener;
+import org.jivesoftware.smack.XMPPConnection;
+import org.jivesoftware.smack.filter.IQTypeFilter;
+import org.jivesoftware.smack.filter.PacketFilter;
+import org.jivesoftware.smack.packet.IQ;
 import org.jivesoftware.smack.packet.Message;
+import org.jivesoftware.smack.packet.Packet;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
@@ -15,6 +33,9 @@ import android.content.IntentFilter;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -26,10 +47,13 @@ import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import com.duality.api.PredictionMessageInfo;
 import com.duality.client.model.ChatDataSQL;
+import com.duality.client.model.PredictionMessage;
 import com.duality.client.model.XMPPManager;
 
 public class ChatlogActivity extends Activity {
+	private static final String TAG = "ChatlogActivity";
 
 	private String recipentName;
 	private String recipentUsername;
@@ -68,7 +92,6 @@ public class ChatlogActivity extends Activity {
 
 			@Override
 			public void onClick(View v) {
-				// TODO Auto-generated method stub
 				String to = recipentUsername;
 				String text = message.getText().toString();
 				Message msg = new Message(to, Message.Type.chat);
@@ -91,12 +114,12 @@ public class ChatlogActivity extends Activity {
 						adapter.notifyDataSetChanged();
 					}
 				}catch (Exception e){
-					e.printStackTrace();
+					Log.e(TAG, "Failed to send message", e);
 				}
 			}
 		});
 
-		/*		message.addTextChangedListener(new TextWatcher(){
+		message.addTextChangedListener(new TextWatcher(){
 
 			@Override
 			public void afterTextChanged(Editable arg0) {
@@ -114,23 +137,13 @@ public class ChatlogActivity extends Activity {
 			@Override
 			public void onTextChanged(CharSequence s, int start, int before,
 					int count) {
-				// TODO Auto-generated method stub
+				final XMPPManager xmppManager = XMPPManager.singleton();
+				final String username = xmppManager.getUsername();
+				final String domain = xmppManager.getDomain();
 				final String text = s.toString();
-				IQ iq = new IQ(){
-					@Override
-					public String getChildElementXML() {
-						// TODO Auto-generated method stub
-						return "<query xmlns='duality'>" +
-						"<text>" + text.toString() + "</text> " +
-						"<recipent>" +  String.valueOf(recipentName) + "</recipent>" +
-						"</query>" +
-						"</iq>";
-					}
-				};
-				iq.setType(IQ.Type.SET);
-				iq.setTo(XMPPManager.singleton().getDomain());
-				iq.setFrom(XMPPManager.singleton().getUsername());
-				XMPPManager.singleton().getXMPPConnection().sendPacket(iq);
+				final PredictionMessage iq = new PredictionMessage(username, domain, text, recipentName);
+				final XMPPConnection xmppConnection = xmppManager.getXMPPConnection();
+				xmppConnection.sendPacket(iq);
 			}
 
 		});
@@ -141,7 +154,6 @@ public class ChatlogActivity extends Activity {
 
 			@Override
 			public void processPacket(Packet arg0) {
-				// TODO Auto-generated method stub
 				String queryXML = arg0.toXML();
 				mPredictionList = getPrediction(queryXML);
 			}
@@ -153,33 +165,28 @@ public class ChatlogActivity extends Activity {
 				try {
 					b = f.newDocumentBuilder();
 				} catch (ParserConfigurationException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					Log.e(TAG, "Failed to create a document builder", e);
 				}
 				Document doc = null;
 				try {
 					doc = b.parse(new ByteArrayInputStream(input.getBytes("UTF-8")));
 				} catch (UnsupportedEncodingException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					Log.e(TAG, "Divice does not support UTF-8", e);
 				} catch (SAXException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					Log.e(TAG, "Failed to parse the prediction result packet", e);
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					Log.e(TAG, "IOException during parsing of prediction result packet", e);
 				}
-				NodeList queries = doc.getElementsByTagName("query");
+				NodeList queries = doc.getElementsByTagName(PredictionMessageInfo.ELEMENT_NAME);
 				for (int i = 0; i < queries.getLength(); i++) {
 					Element query = (Element) queries.item(i);
-					Node prediction = query.getElementsByTagName("prediction").item(0);
+					Node prediction = query.getElementsByTagName(PredictionMessageInfo.PREDICTION).item(0);
 					temp.add(prediction.getTextContent());
 				}
 				return (String[])temp.toArray();
 			}
 
 		}, pFilter);
-		 */
 
 		mPredictionList = new String[]{"A","B","C"};
 		ArrayAdapter<String> predictionAdapter = new ArrayAdapter<String>(this,android.R.layout.simple_spinner_item, mPredictionList);
@@ -190,7 +197,6 @@ public class ChatlogActivity extends Activity {
 			@Override
 			public void onItemSelected(AdapterView<?> parent, View arg1,
 					int pos, long id) {
-				// TODO Auto-generated method stub
 				check++;
 				if(check>1){
 					message.setText(parent.getSelectedItem().toString());
@@ -291,7 +297,6 @@ public class ChatlogActivity extends Activity {
 
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			// TODO Auto-generated method stub
 			Bundle bundle = intent.getExtras();
 			mMessages.add(getName(bundle.getString("sender")) + ": " + bundle.getString("text"));
 			adapter.notifyDataSetChanged();

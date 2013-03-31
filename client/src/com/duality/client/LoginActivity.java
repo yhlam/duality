@@ -3,12 +3,12 @@ package com.duality.client;
 import org.jivesoftware.smack.ConnectionConfiguration;
 import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.XMPPException;
-import org.jivesoftware.smack.packet.Presence;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
@@ -16,7 +16,6 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
-import com.duality.client.model.GPSPresence;
 import com.duality.client.model.XMPPManager;
 
 public class LoginActivity extends Activity {
@@ -47,7 +46,6 @@ public class LoginActivity extends Activity {
 		signIn.setOnClickListener(new Button.OnClickListener(){
 			@Override
 			public void onClick(View v) {
-				// TODO Auto-generated method stub
 				mUserForm.setVisibility(View.GONE);
 				mStatus.setVisibility(View.VISIBLE);
 				new XMPPConnectionSetting().execute();
@@ -58,7 +56,6 @@ public class LoginActivity extends Activity {
 
 			@Override
 			public void onClick(View arg0) {
-				// TODO Auto-generated method stub
 				SERVERIP = ip.getText().toString();
 				DOMAIN = domain.getText().toString();
 			}
@@ -77,21 +74,21 @@ public class LoginActivity extends Activity {
 
 		@Override
 		protected Integer doInBackground(Void... params) {
-			// TODO Auto-generated method stub
 			mConnect = new ConnectionConfiguration(SERVERIP, 5222, DOMAIN);
 			mXmpp = new XMPPConnection(mConnect);
 			try{
 				mXmpp.connect();
 				mXmpp.login(mUsername.getText().toString(), mPwd.getText().toString());
-				mXmpp.sendPacket(new GPSPresence(Presence.Type.available));
-				XMPPManager.singleton().setXMPPConnection(mXmpp);
-				XMPPManager.singleton().setUsername(mUsername.getText().toString() + "@" + DOMAIN);
-				XMPPManager.singleton().setServerIP(SERVERIP);
-				XMPPManager.singleton().setDomain(DOMAIN);
+				final XMPPManager xmppManager = XMPPManager.singleton();
+				xmppManager.setXMPPConnection(mXmpp);
+				final String username = mUsername.getText().toString() + "@" + DOMAIN;
+				xmppManager.setUsername(username);
+				xmppManager.setServerIP(SERVERIP);
+				xmppManager.setDomain(DOMAIN);
 				return 1;
 			}catch(XMPPException e){
+				Log.e(LoginActivity.class.getName(), "Login Connection Error", e);
 				return -1;
-
 			}
 		}
 
