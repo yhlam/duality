@@ -1,5 +1,7 @@
 package com.duality.client;
 
+import java.io.File;
+
 import org.jivesoftware.smack.ConnectionConfiguration;
 import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.XMPPException;
@@ -7,6 +9,7 @@ import org.jivesoftware.smack.XMPPException;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -19,7 +22,7 @@ import android.widget.Toast;
 import com.duality.client.model.XMPPManager;
 
 public class LoginActivity extends Activity {
-	
+
 	private String SERVERIP = "143.89.168.103";
 	private String DOMAIN = "fyp";
 	private XMPPConnection mXmpp;
@@ -51,7 +54,7 @@ public class LoginActivity extends Activity {
 				new XMPPConnectionSetting().execute();
 			}
 		});
-		
+
 		serverSet.setOnClickListener(new Button.OnClickListener(){
 
 			@Override
@@ -59,7 +62,7 @@ public class LoginActivity extends Activity {
 				SERVERIP = ip.getText().toString();
 				DOMAIN = domain.getText().toString();
 			}
-			
+
 		});
 	}
 
@@ -75,6 +78,20 @@ public class LoginActivity extends Activity {
 		@Override
 		protected Integer doInBackground(Void... params) {
 			mConnect = new ConnectionConfiguration(SERVERIP, 5222, DOMAIN);
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+				mConnect.setTruststoreType("AndroidCAStore");
+			    mConnect.setTruststorePassword(null);
+			    mConnect.setTruststorePath(null);
+			} else {
+				mConnect.setTruststoreType("BKS");
+			    String path = System.getProperty("javax.net.ssl.trustStore");
+			    if (path == null) {
+			        path = System.getProperty("java.home") + File.separator + "etc"
+			            + File.separator + "security" + File.separator
+			            + "cacerts.bks";
+			    }
+			    mConnect.setTruststorePath(path);
+			}
 			mXmpp = new XMPPConnection(mConnect);
 			try{
 				mXmpp.connect();
