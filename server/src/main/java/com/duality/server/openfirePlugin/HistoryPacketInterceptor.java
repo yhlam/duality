@@ -36,9 +36,9 @@ public class HistoryPacketInterceptor implements PacketInterceptor {
 		final String receiver = message.getTo().toBareJID();
 		final String messageBody = message.getBody();
 
-		// TODO: Grab the locations
-		final Location senderLocation = null;
-		final Location receiverLocation = null;
+		final LocationRepository locationRepo = LocationRepository.singleton();
+		final Location senderLocation = locationRepo.getLocation(sender);
+		final Location receiverLocation = locationRepo.getLocation(receiver);
 
 		final HistoryDatabaseAdapter historyDatabaseAdapter = HistoryDatabaseAdapter.singleton();
 		historyDatabaseAdapter.addHistory(sender, receiver, now, messageBody, senderLocation, receiverLocation);

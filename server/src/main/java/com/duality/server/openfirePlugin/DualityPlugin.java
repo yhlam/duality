@@ -21,6 +21,10 @@ public class DualityPlugin implements Plugin {
 		final IQRouter iqRouter = xmppServer.getIQRouter();
 		final PredictionIQHandler predictionIQHandler = PredictionIQHandler.singleton();
 		iqRouter.addHandler(predictionIQHandler);
+		
+		// Register LocationRepository
+		final LocationRepository locationRepo = LocationRepository.singleton();
+		iqRouter.addHandler(locationRepo);
 	}
 
 	@Override
@@ -35,5 +39,9 @@ public class DualityPlugin implements Plugin {
 		final IQRouter iqRouter = xmppServer.getIQRouter();
 		final PredictionIQHandler predictionIQHandler = PredictionIQHandler.singleton();
 		iqRouter.removeHandler(predictionIQHandler);
+		
+		// Deregister LocationRepository
+		final LocationRepository locationRepo = LocationRepository.singleton();
+		iqRouter.removeHandler(locationRepo);
 	}
 }
