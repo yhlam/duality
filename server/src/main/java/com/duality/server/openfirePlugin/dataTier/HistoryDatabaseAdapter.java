@@ -37,6 +37,10 @@ public class HistoryDatabaseAdapter {
 	private static final String SELECT_ALL_SQL = "SELECT ID, SENDER, RECEIVER, TIME, MESSAGE, SENDER_LATITUDE, SENDER_LONGITUDE, RECEIVER_LATITUDE, RECEIVER_LONGITUDE FROM duality";
 	private static final String SELECT_BY_ID_SQL = SELECT_ALL_SQL + " WHERE ID = ?";
 
+	private static final String NEXT_ENTRY_SQL = SELECT_ALL_SQL
+			+ " WHERE (((SENDER=? AND RECEIVER=?) OR (SENDER=? AND RECEIVER=?)) AND TIME>? AND TIME<?)"
+			+ " ORDER BY TIME ASC";
+
 	private static final Logger LOG = LoggerFactory.getLogger(HistoryDatabaseAdapter.class);
 
 	private final List<NewHistoryHandler> handlers;
@@ -70,10 +74,10 @@ public class HistoryDatabaseAdapter {
 			statement = con.createStatement();
 			rs = statement.executeQuery(SELECT_ALL_SQL);
 
-			final List<HistoryEntry> result = readFromDb(rs);
+			final List<HistoryEntry> result = readAllFromDb(rs);
 			return result;
 		} catch (final SQLException e) {
-			e.printStackTrace();
+			LOG.error("Failed to get all history", e);
 		} finally {
 			DbConnectionManager.closeConnection(rs, statement, con);
 		}
@@ -81,24 +85,29 @@ public class HistoryDatabaseAdapter {
 		return Collections.emptyList();
 	}
 
-	private List<HistoryEntry> readFromDb(final ResultSet rs) throws SQLException {
+	private List<HistoryEntry> readAllFromDb(final ResultSet rs) throws SQLException {
 		final List<HistoryEntry> result = Lists.newLinkedList();
 		while (rs.next()) {
-			// make the list of HistoryEntry
-			final int id = rs.getInt(1);
-			final String sender = rs.getString(2);
-			final String receiver = rs.getString(3);
-			final long timestamp = rs.getLong(4);
-			final Date time = new Date(timestamp);
-			final String message = rs.getString(5);
-
-			final Location senderLocation = getLocation(rs, 6, 7);
-			final Location receiverLocation = getLocation(rs, 8, 9);
-
-			final HistoryEntry entry = new HistoryEntry(id, sender, receiver, time, message, senderLocation, receiverLocation);
+			final HistoryEntry entry = readFromDb(rs);
 			result.add(entry);
 		}
 		return result;
+	}
+
+	private HistoryEntry readFromDb(final ResultSet rs) throws SQLException {
+		// make the list of HistoryEntry
+		final int id = rs.getInt(1);
+		final String sender = rs.getString(2);
+		final String receiver = rs.getString(3);
+		final long timestamp = rs.getLong(4);
+		final Date time = new Date(timestamp);
+		final String message = rs.getString(5);
+
+		final Location senderLocation = getLocation(rs, 6, 7);
+		final Location receiverLocation = getLocation(rs, 8, 9);
+
+		final HistoryEntry entry = new HistoryEntry(id, sender, receiver, time, message, senderLocation, receiverLocation);
+		return entry;
 	}
 
 	private Location getLocation(final ResultSet rs, final int latCol, final int longCol) throws SQLException {
@@ -118,7 +127,7 @@ public class HistoryDatabaseAdapter {
 
 	/**
 	 * Get History for a given ID
-	 * 
+	 *
 	 * @param id ID of a history entry
 	 * @return a HistoryEntry with the ID
 	 */
@@ -132,77 +141,80 @@ public class HistoryDatabaseAdapter {
 			pstmt.setInt(1, id);
 			rs = pstmt.executeQuery();
 
-			final List<HistoryEntry> result = readFromDb(rs);
-			if (result.isEmpty()) {
+			if(rs.next()) {
+				final HistoryEntry result = readFromDb(rs);
+				return result;
+			}
+			else {
 				return null;
-			} else {
-				final HistoryEntry firstResult = result.get(0);
-				return firstResult;
 			}
 		} catch (final SQLException e) {
 			LOG.error("Failed to get history of ID: " + id, e);
 		} finally {
 			DbConnectionManager.closeConnection(rs, pstmt, con);
 		}
-		
-		
+
 		return null;
 	}
 
-	
+	/**
+	 * Get the next History Entry of a sender-receiver pair, within a time interval
+	 *
+	 * @param id The ID of the preceding history entry of the returned history entry
+	 * @param timeInterval Only return next history entry if it is sent within timeInterval after the currentHistoryEntry is created; in milliseconds
+	 * @return the next History Entry if it is within the timeInterval; null otherwise.
+	 */
+	public HistoryEntry nextHistoryEntry(final int id, final long timeInterval) {
+		final HistoryEntry history = getHistoryById(id);
+		if(history == null) {
+			return null;
+		}
+
+		final HistoryEntry nextHistoryEntry = nextHistoryEntry(history, timeInterval);
+		return nextHistoryEntry;
+	}
 
 	/**
 	 * Get the next History Entry of a sender-receiver pair, within a time interval
+	 *
 	 * @param currentHistoryEntry The preceding history entry of the returned history entry
 	 * @param timeInterval Only return next history entry if it is sent within timeInterval after the currentHistoryEntry is created; in milliseconds
 	 * @return the next History Entry if it is within the timeInterval; null otherwise.
 	 */
-	public HistoryEntry nextHistoryEntry (HistoryEntry currentHistoryEntry, long timeInterval) {
-		
+	public HistoryEntry nextHistoryEntry(final HistoryEntry currentHistoryEntry, final long timeInterval) {
+
 		Connection con = null;
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
-		
-		long timeLowerLimit = currentHistoryEntry.getTime().getTime();
-		long timeUpperLimit = timeLowerLimit + timeInterval;
-		
-		try {
-			con= DbConnectionManager.getConnection();
-			pstmt = con.prepareStatement("select * from duality WHERE (((SENDER=? AND RECEIVER=?) OR (SENDER=? AND RECEIVER=?)) AND (TIME>? AND TIME<?)) ORDER BY TIME ASC");
-			pstmt.setString(1, currentHistoryEntry.getSender());
-			pstmt.setString(2, currentHistoryEntry.getReceiver());
-			pstmt.setString(3, currentHistoryEntry.getReceiver());
-			pstmt.setString(4, currentHistoryEntry.getSender());
-			pstmt.setLong(5, timeLowerLimit);
-			pstmt.setLong(6,timeUpperLimit);
-			
-			rs = pstmt.executeQuery();
-			if (rs.next()){
-				int entryId=rs.getInt("ID");
-				String sender = rs.getString("SENDER");
-				String receiver=rs.getString("RECEIVER");
-				Date time = new Date (rs.getLong("TIME"));
-				String message = rs.getString("MESSAGE");
-				double senderlatitude = rs.getLong("SENDER_LATITUDE");
-				double senderlongitude = rs.getLong("SENDER_LONGITUDE");
-				double receiverlatitude = rs.getLong("RECEIVER_LATITUDE");
-				double receiverlongitude = rs.getLong("RECEIVER_LONGITUDE");
-				Location senderLocation = new Location(senderlatitude, senderlongitude);
-				Location receiverLocation = new Location(receiverlatitude, receiverlongitude);
-				HistoryEntry entry = new HistoryEntry(entryId,sender,receiver,time,message,senderLocation,receiverLocation);
 
-				return entry;
-			}
-			else{
+		final long timeLowerLimit = currentHistoryEntry.getTime().getTime();
+		final long timeUpperLimit = timeLowerLimit + timeInterval;
+		final String user1 = currentHistoryEntry.getSender();
+		final String user2 = currentHistoryEntry.getReceiver();
+
+		try {
+			con = DbConnectionManager.getConnection();
+			pstmt = con.prepareStatement(NEXT_ENTRY_SQL);
+			pstmt.setString(1, user1);
+			pstmt.setString(2, user2);
+			pstmt.setString(3, user2);
+			pstmt.setString(4, user1);
+			pstmt.setLong(5, timeLowerLimit);
+			pstmt.setLong(6, timeUpperLimit);
+
+			rs = pstmt.executeQuery();
+			if (rs.next()) {
+				final HistoryEntry result = readFromDb(rs);
+				return result;
+			} else {
 				return null;
 			}
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} finally{
-			DbConnectionManager.closeConnection(rs,pstmt,con);
+		} catch (final SQLException e) {
+			LOG.error("Failed to get next entry", e);
+		} finally {
+			DbConnectionManager.closeConnection(rs, pstmt, con);
 		}
-		
+
 		return null;
 	}
 
@@ -260,7 +272,7 @@ public class HistoryDatabaseAdapter {
 			con.commit();
 
 		} catch (final SQLException e) {
-			LOG.error("Error in insert history");
+			LOG.error("Error in insert history", e);
 			return;
 		} finally {
 			DbConnectionManager.closeConnection(con);
