@@ -144,7 +144,65 @@ public class HistoryDatabaseAdapter {
 		} finally {
 			DbConnectionManager.closeConnection(rs, pstmt, con);
 		}
+		
+		
+		return null;
+	}
 
+	
+
+	/**
+	 * Get the next History Entry of a sender-receiver pair, within a time interval
+	 * @param currentHistoryEntry The preceding history entry of the returned history entry
+	 * @param timeInterval Only return next history entry if it is sent within timeInterval after the currentHistoryEntry is created; in milliseconds
+	 * @return the next History Entry if it is within the timeInterval; null otherwise.
+	 */
+	public HistoryEntry nextHistoryEntry (HistoryEntry currentHistoryEntry, long timeInterval) {
+		
+		Connection con = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		
+		long timeLowerLimit = currentHistoryEntry.getTime().getTime();
+		long timeUpperLimit = timeLowerLimit + timeInterval;
+		
+		try {
+			con= DbConnectionManager.getConnection();
+			pstmt = con.prepareStatement("select * from duality WHERE (((SENDER=? AND RECEIVER=?) OR (SENDER=? AND RECEIVER=?)) AND (TIME>? AND TIME<?)) ORDER BY TIME ASC");
+			pstmt.setString(1, currentHistoryEntry.getSender());
+			pstmt.setString(2, currentHistoryEntry.getReceiver());
+			pstmt.setString(3, currentHistoryEntry.getReceiver());
+			pstmt.setString(4, currentHistoryEntry.getSender());
+			pstmt.setLong(5, timeLowerLimit);
+			pstmt.setLong(6,timeUpperLimit);
+			
+			rs = pstmt.executeQuery();
+			if (rs.next()){
+				int entryId=rs.getInt("ID");
+				String sender = rs.getString("SENDER");
+				String receiver=rs.getString("RECEIVER");
+				Date time = new Date (rs.getLong("TIME"));
+				String message = rs.getString("MESSAGE");
+				double senderlatitude = rs.getLong("SENDER_LATITUDE");
+				double senderlongitude = rs.getLong("SENDER_LONGITUDE");
+				double receiverlatitude = rs.getLong("RECEIVER_LATITUDE");
+				double receiverlongitude = rs.getLong("RECEIVER_LONGITUDE");
+				Location senderLocation = new Location(senderlatitude, senderlongitude);
+				Location receiverLocation = new Location(receiverlatitude, receiverlongitude);
+				HistoryEntry entry = new HistoryEntry(entryId,sender,receiver,time,message,senderLocation,receiverLocation);
+
+				return entry;
+			}
+			else{
+				return null;
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally{
+			DbConnectionManager.closeConnection(rs,pstmt,con);
+		}
+		
 		return null;
 	}
 
