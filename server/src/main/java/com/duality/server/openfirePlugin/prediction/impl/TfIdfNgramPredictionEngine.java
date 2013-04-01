@@ -30,6 +30,12 @@ public class TfIdfNgramPredictionEngine extends PredictionEngine implements NewH
 		final HistoryDatabaseAdapter historyAdapter = HistoryDatabaseAdapter.singleton();
 		historyAdapter.register(this);
 	}
+	
+	@Override
+	public List<String> getPredictions(HistoryEntry entry, String incompletedMessage) {
+		final Map<FeatureKey<?>, Object> context = extractFeatures(entry);
+		return getPredictions(context, incompletedMessage);
+	}
 
 	@Override
 	public List<String> getPredictions(final Map<FeatureKey<?>, Object> context, final String incompletedMessage) {

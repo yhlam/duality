@@ -27,8 +27,10 @@ public class OpenfireDbAdapter extends HistoryDatabaseAdapter {
 	private static final String SELECT_BY_ID_SQL = SELECT_ALL_SQL + " WHERE ID = ?";
 
 	private static final String NEXT_ENTRY_SQL = SELECT_ALL_SQL
-			+ " WHERE (((SENDER=? AND RECEIVER=?) OR (SENDER=? AND RECEIVER=?)) AND TIME>? AND TIME<?)"
+			+ " WHERE ((SENDER=? AND RECEIVER=?) OR (SENDER=? AND RECEIVER=?)) AND TIME>? AND TIME<?"
 			+ " ORDER BY TIME ASC";
+
+	private static final String LAST_ENTRY_SQL = SELECT_ALL_SQL + " WHERE (SENDER=? AND RECEIVER=?) OR (SENDER=? AND RECEIVER=?)";
 
 	private static final Logger LOG = LoggerFactory.getLogger(OpenfireDbAdapter.class);
 
@@ -52,46 +54,6 @@ public class OpenfireDbAdapter extends HistoryDatabaseAdapter {
 		}
 
 		return Collections.emptyList();
-	}
-
-	private List<HistoryEntry> readAllFromDb(final ResultSet rs) throws SQLException {
-		final List<HistoryEntry> result = Lists.newLinkedList();
-		while (rs.next()) {
-			final HistoryEntry entry = readFromDb(rs);
-			result.add(entry);
-		}
-		return result;
-	}
-
-	private HistoryEntry readFromDb(final ResultSet rs) throws SQLException {
-		// make the list of HistoryEntry
-		final int id = rs.getInt(1);
-		final String sender = rs.getString(2);
-		final String receiver = rs.getString(3);
-		final long timestamp = rs.getLong(4);
-		final Date time = new Date(timestamp);
-		final String message = rs.getString(5);
-
-		final Location senderLocation = getLocation(rs, 6, 7);
-		final Location receiverLocation = getLocation(rs, 8, 9);
-
-		final HistoryEntry entry = new HistoryEntry(id, sender, receiver, time, message, senderLocation, receiverLocation);
-		return entry;
-	}
-
-	private Location getLocation(final ResultSet rs, final int latCol, final int longCol) throws SQLException {
-		final double latitude = rs.getDouble(latCol);
-		final boolean nullLatitude = rs.wasNull();
-
-		final double longitude = rs.getDouble(longCol);
-		final boolean nullLongitude = rs.wasNull();
-
-		if (nullLatitude || nullLongitude) {
-			return null;
-		} else {
-			final Location location = new Location(latitude, longitude);
-			return location;
-		}
 	}
 
 	@Override
@@ -169,6 +131,36 @@ public class OpenfireDbAdapter extends HistoryDatabaseAdapter {
 
 		return null;
 	}
+	
+	@Override
+	public HistoryEntry getLastHistoryEntryOfUsers(String user1, String user2) {
+		Connection con = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+
+		try {
+			con = DbConnectionManager.getConnection();
+			pstmt = con.prepareStatement(LAST_ENTRY_SQL);
+			pstmt.setString(1, user1);
+			pstmt.setString(2, user2);
+			pstmt.setString(3, user2);
+			pstmt.setString(4, user1);
+
+			rs = pstmt.executeQuery();
+			if (rs.next()) {
+				final HistoryEntry result = readFromDb(rs);
+				return result;
+			} else {
+				return null;
+			}
+		} catch (final SQLException e) {
+			LOG.error("Failed to get last entry", e);
+		} finally {
+			DbConnectionManager.closeConnection(rs, pstmt, con);
+		}
+
+		return null;
+	}
 
 	@Override
 	public void addHistory(final String sender, final String receiver, final Date time, final String message, final Location senderLocation,
@@ -231,6 +223,46 @@ public class OpenfireDbAdapter extends HistoryDatabaseAdapter {
 			for (final NewHistoryHandler handler : handlers) {
 				handler.onNewHistory(historyEntry);
 			}
+		}
+	}
+
+	private List<HistoryEntry> readAllFromDb(final ResultSet rs) throws SQLException {
+		final List<HistoryEntry> result = Lists.newLinkedList();
+		while (rs.next()) {
+			final HistoryEntry entry = readFromDb(rs);
+			result.add(entry);
+		}
+		return result;
+	}
+
+	private HistoryEntry readFromDb(final ResultSet rs) throws SQLException {
+		// make the list of HistoryEntry
+		final int id = rs.getInt(1);
+		final String sender = rs.getString(2);
+		final String receiver = rs.getString(3);
+		final long timestamp = rs.getLong(4);
+		final Date time = new Date(timestamp);
+		final String message = rs.getString(5);
+
+		final Location senderLocation = getLocation(rs, 6, 7);
+		final Location receiverLocation = getLocation(rs, 8, 9);
+
+		final HistoryEntry entry = new HistoryEntry(id, sender, receiver, time, message, senderLocation, receiverLocation);
+		return entry;
+	}
+
+	private Location getLocation(final ResultSet rs, final int latCol, final int longCol) throws SQLException {
+		final double latitude = rs.getDouble(latCol);
+		final boolean nullLatitude = rs.wasNull();
+
+		final double longitude = rs.getDouble(longCol);
+		final boolean nullLongitude = rs.wasNull();
+
+		if (nullLatitude || nullLongitude) {
+			return null;
+		} else {
+			final Location location = new Location(latitude, longitude);
+			return location;
 		}
 	}
 }

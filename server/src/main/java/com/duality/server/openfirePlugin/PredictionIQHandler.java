@@ -1,5 +1,7 @@
 package com.duality.server.openfirePlugin;
 
+import java.util.List;
+
 import org.dom4j.Element;
 import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
@@ -10,6 +12,9 @@ import org.xmpp.packet.PacketError;
 import org.xmpp.packet.PacketError.Condition;
 
 import com.duality.api.PredictionMessageInfo;
+import com.duality.server.openfirePlugin.dataTier.HistoryDatabaseAdapter;
+import com.duality.server.openfirePlugin.dataTier.HistoryEntry;
+import com.duality.server.openfirePlugin.prediction.PredictionEngine;
 
 public class PredictionIQHandler extends IQHandler {
 
@@ -25,28 +30,22 @@ public class PredictionIQHandler extends IQHandler {
 	}
 
 	@Override
-	public IQ handleIQ(IQ packet) throws UnauthorizedException {
-		IQ replyPacket = IQ.createResultIQ(packet);
+	public IQ handleIQ(final IQ packet) throws UnauthorizedException {
+		final IQ replyPacket = IQ.createResultIQ(packet);
 		final IQ.Type type = packet.getType();
 		if (type == IQ.Type.set) {
 			final Element childElement = packet.getChildElement();
 			if (childElement == null) {
-				replyPacket.setError(new PacketError(
-						Condition.bad_request,
-						org.xmpp.packet.PacketError.Type.modify,
+				replyPacket.setError(new PacketError(Condition.bad_request, org.xmpp.packet.PacketError.Type.modify,
 						"IQ stanzas of type 'get' and 'set' MUST contain one and only one child element (RFC 3920 section 9.2.3)."));
-			}
-			else {
+			} else {
 				final String namespace = childElement.getNamespaceURI();
-				if(PredictionMessageInfo.NAMESPACE.equals(namespace)) {
+				if (PredictionMessageInfo.NAMESPACE.equals(namespace)) {
 					final Element receipentElem = childElement.element(PredictionMessageInfo.RECIPTENT);
-					if(receipentElem == null) {
-						replyPacket.setError(new PacketError(
-								Condition.bad_request,
-								org.xmpp.packet.PacketError.Type.modify,
+					if (receipentElem == null) {
+						replyPacket.setError(new PacketError(Condition.bad_request, org.xmpp.packet.PacketError.Type.modify,
 								"Prediction set package must has a recipent element."));
-					}
-					else {
+					} else {
 						final String recipent = receipentElem.getTextTrim();
 						final JID senderJid = packet.getFrom();
 						final String sender = senderJid.toBareJID();
@@ -55,14 +54,12 @@ public class PredictionIQHandler extends IQHandler {
 						final Element response = replyPacket.setChildElement(PredictionMessageInfo.ELEMENT_NAME, PredictionMessageInfo.NAMESPACE);
 						consturctResponse(sender, recipent, text, response);
 					}
-					
-				}
-				else {
+
+				} else {
 					replyPacket.setError(Condition.feature_not_implemented);
 				}
 			}
-		}
-		else {
+		} else {
 			replyPacket.setError(Condition.feature_not_implemented);
 		}
 
@@ -73,14 +70,19 @@ public class PredictionIQHandler extends IQHandler {
 	public IQHandlerInfo getInfo() {
 		return INFO;
 	}
-	
-	private void consturctResponse(String sender, String recipent, String text, Element response) {
-//		FIXME: Replace the hardcoded responses to the results from PredictionEngine
-//		final PredictionEngine predictionEngine = PredictionEngine.singleton();
-//		predictionEngine.getPredictions(context, text);
-		response.addElement(PredictionMessageInfo.PREDICTION).addText("prediction 1");
-		response.addElement(PredictionMessageInfo.PREDICTION).addText("prediction 2");
-		response.addElement(PredictionMessageInfo.PREDICTION).addText("prediction 3");
+
+	private void consturctResponse(final String sender, final String recipent, final String text, final Element response) {
+		final HistoryDatabaseAdapter historyDbAdapter = HistoryDatabaseAdapter.singleton();
+		final HistoryEntry lastHistory = historyDbAdapter.getLastHistoryEntryOfUsers(sender, recipent);
+
+		if (lastHistory != null) {
+			final PredictionEngine predictionEngine = PredictionEngine.singleton();
+			final List<String> predictions = predictionEngine.getPredictions(lastHistory, text);
+
+			for (final String prediction : predictions) {
+				response.addElement(PredictionMessageInfo.PREDICTION).addText(prediction);
+			}
+		}
 	}
 
 }
