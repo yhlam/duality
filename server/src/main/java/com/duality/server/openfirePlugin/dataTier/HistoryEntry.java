@@ -53,4 +53,10 @@ public class HistoryEntry {
 	public Location getReceiverLocation() {
 		return receiverLocation;
 	}
+	
+	@Override
+	public String toString() {
+		return "{id: " + id + ", sender: " + sender + ", receiver: " + receiver + ", time: " + time
+				+ ", message: " + message + ", senderLocation: " + senderLocation + ", receiverLocation: " + receiverLocation + "}";
+	}
 }

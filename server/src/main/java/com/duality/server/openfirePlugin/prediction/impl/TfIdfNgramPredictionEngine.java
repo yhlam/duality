@@ -24,6 +24,7 @@ import com.google.common.collect.Sets;
 
 public class TfIdfNgramPredictionEngine extends PredictionEngine implements NewHistoryHandler {
 	private static final int MAX_PREDICTION_NUM = 10;
+	private static final int NEXT_ENTRY_TIME_LIMIT = 60 * 60 * 1000; // 1 Hour
 
 	public TfIdfNgramPredictionEngine() {
 		final HistoryDatabaseAdapter historyAdapter = HistoryDatabaseAdapter.singleton();
@@ -37,9 +38,8 @@ public class TfIdfNgramPredictionEngine extends PredictionEngine implements NewH
 		final MinMaxPriorityQueue<MessageCloseness> queue = MinMaxPriorityQueue.maximumSize(MAX_PREDICTION_NUM).create();
 		for (final HistoryEntry history : histories) {
 			final Map<FeatureKey<?>, Object> features = extractFeatures(history);
-			final int id = history.getId();
 			final double closeness = dotProduct(context, features);
-			final MessageCloseness messageCloseness = new MessageCloseness(id, closeness);
+			final MessageCloseness messageCloseness = new MessageCloseness(history, closeness);
 			queue.add(messageCloseness);
 		}
 
@@ -47,9 +47,8 @@ public class TfIdfNgramPredictionEngine extends PredictionEngine implements NewH
 
 		while (!queue.isEmpty()) {
 			final MessageCloseness closeness = queue.poll();
-			final int id = closeness.getId();
-			// TODO: Change it to get next message when the method is available
-			final HistoryEntry nextHistory = historyDb.getHistoryById(id);
+			final HistoryEntry historyEntry = closeness.getHistoryEntry();
+			final HistoryEntry nextHistory = historyDb.nextHistoryEntry(historyEntry, NEXT_ENTRY_TIME_LIMIT);
 			if (nextHistory != null) {
 				final String message = nextHistory.getMessage();
 				if (incompletedMessage == null || message.startsWith(incompletedMessage)) {
@@ -159,16 +158,16 @@ public class TfIdfNgramPredictionEngine extends PredictionEngine implements NewH
 	}
 
 	private static class MessageCloseness implements Comparable<MessageCloseness> {
-		private final int id;
+		private final HistoryEntry entry;
 		private final double closeness;
 
-		public MessageCloseness(final int id, final double closeness) {
-			this.id = id;
+		public MessageCloseness(final HistoryEntry entry, final double closeness) {
+			this.entry = entry;
 			this.closeness = closeness;
 		}
 
-		public int getId() {
-			return id;
+		public HistoryEntry getHistoryEntry() {
+			return entry;
 		}
 
 		@Override
@@ -184,7 +183,7 @@ public class TfIdfNgramPredictionEngine extends PredictionEngine implements NewH
 
 		@Override
 		public String toString() {
-			return "{id: " + id + ", closeness: " + closeness + "}";
+			return "{historyEntry: " + entry + ", closeness: " + closeness + "}";
 		}
 	}
 }
