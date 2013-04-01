@@ -30,7 +30,9 @@ public class OpenfireDbAdapter extends HistoryDatabaseAdapter {
 			+ " WHERE ((SENDER=? AND RECEIVER=?) OR (SENDER=? AND RECEIVER=?)) AND TIME>? AND TIME<?"
 			+ " ORDER BY TIME ASC";
 
-	private static final String LAST_ENTRY_SQL = SELECT_ALL_SQL + " WHERE (SENDER=? AND RECEIVER=?) OR (SENDER=? AND RECEIVER=?)";
+	private static final String LAST_ENTRY_SQL = SELECT_ALL_SQL
+			+ " WHERE (SENDER=? AND RECEIVER=?) OR (SENDER=? AND RECEIVER=?)"
+			+ " ORDER BY TIME DESC";
 
 	private static final Logger LOG = LoggerFactory.getLogger(OpenfireDbAdapter.class);
 
