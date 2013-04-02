@@ -7,6 +7,7 @@ import java.util.Set;
 
 import com.duality.server.openfirePlugin.dataTier.HistoryDatabaseAdapter;
 import com.duality.server.openfirePlugin.dataTier.HistoryEntry;
+import com.duality.server.openfirePlugin.dataTier.NewHistoryHandler;
 import com.duality.server.openfirePlugin.prediction.impl.feature.AtomicFeature;
 import com.duality.server.openfirePlugin.prediction.impl.feature.AtomicFeaturesManager;
 import com.google.common.collect.HashMultiset;
@@ -16,70 +17,77 @@ import com.google.common.collect.Multiset;
 import com.google.common.collect.Multiset.Entry;
 import com.google.common.collect.Sets;
 
-public class TfIdfStore {
+public class TfIdfStore implements NewHistoryHandler {
 	private static final TfIdfStore INSTANCE = new TfIdfStore();
 
 	public static TfIdfStore singleton() {
 		return INSTANCE;
 	}
+	
+	private static final AtomicFeaturesManager ATOMIC_FEATURES_MANAGER = AtomicFeaturesManager.singleton();
+	private static final FPStore FP_STORE = FPStore.singleton();
 
 	private Map<Set<AtomicFeature<?>>, List<TermFrequency>> tfDf;
 	private int totalCount;
 
 	private TfIdfStore() {
 		refresh();
+		final HistoryDatabaseAdapter historyDbAdapter = HistoryDatabaseAdapter.singleton();
+		historyDbAdapter.register(this);
 	}
 
 	public void refresh() {
 		final Map<Set<AtomicFeature<?>>, List<TermFrequency>> tfDf = Maps.newHashMap();
 
-		final FPStore fsStore = FPStore.singleton();
-		final Set<Set<AtomicFeature<?>>> frequetPatterns = fsStore.getFrequetPatterns();
-		final AtomicFeaturesManager atomicFeaturesManager = AtomicFeaturesManager.singleton();
+		final Set<Set<AtomicFeature<?>>> frequetPatterns = FP_STORE.getFrequetPatterns();
 
 		final HistoryDatabaseAdapter historyDb = HistoryDatabaseAdapter.singleton();
 		final List<HistoryEntry> allHistory = historyDb.getAllHistory();
 		for (final HistoryEntry history : allHistory) {
-			final int id = history.getId();
-
-			final Multiset<Set<AtomicFeature<?>>> tf = HashMultiset.create();
-			final List<AtomicFeature<?>> features = atomicFeaturesManager.constructFeatures(history);
-			final HashSet<AtomicFeature<?>> featureSet = Sets.newHashSet(features);
-			for (Set<AtomicFeature<?>> fp: frequetPatterns) {
-				final boolean hasFp = featureSet.containsAll(fp);
-				if (hasFp) {
-					tf.add(Sets.newCopyOnWriteArraySet(fp));
-				}
-			}
-
-			if (!tf.isEmpty()) {
-				double maxCount = 0;
-				final Set<Entry<Set<AtomicFeature<?>>>> entrySet = tf.entrySet();
-				for (final Entry<Set<AtomicFeature<?>>> entry : entrySet) {
-					final int count = entry.getCount();
-					if (count > maxCount) {
-						maxCount = count;
-					}
-				}
-
-				for (final Entry<Set<AtomicFeature<?>>> entry : entrySet) {
-					final Set<AtomicFeature<?>> ngram = entry.getElement();
-					List<TermFrequency> tfList = tfDf.get(ngram);
-					if (tfList == null) {
-						tfList = Lists.newLinkedList();
-						tfDf.put(ngram, tfList);
-					}
-
-					final int count = entry.getCount();
-					final double normalizedTf = count / maxCount;
-					final TermFrequency termFrequency = new TermFrequency(id, normalizedTf);
-					tfList.add(termFrequency);
-				}
-			}
+			processHistory(tfDf, frequetPatterns, history);
 		}
 
 		this.tfDf = tfDf;
 		this.totalCount = allHistory.size();
+	}
+
+	private void processHistory(final Map<Set<AtomicFeature<?>>, List<TermFrequency>> tfDf, final Set<Set<AtomicFeature<?>>> frequetPatterns, final HistoryEntry history) {
+		final int id = history.getId();
+
+		final Multiset<Set<AtomicFeature<?>>> tf = HashMultiset.create();
+		final List<AtomicFeature<?>> features = ATOMIC_FEATURES_MANAGER.constructFeatures(history);
+		final HashSet<AtomicFeature<?>> featureSet = Sets.newHashSet(features);
+		for (Set<AtomicFeature<?>> fp: frequetPatterns) {
+			final boolean hasFp = featureSet.containsAll(fp);
+			if (hasFp) {
+				tf.add(Sets.newCopyOnWriteArraySet(fp));
+			}
+		}
+
+		if (!tf.isEmpty()) {
+			double maxCount = 0;
+			final Set<Entry<Set<AtomicFeature<?>>>> entrySet = tf.entrySet();
+			for (final Entry<Set<AtomicFeature<?>>> entry : entrySet) {
+				final int count = entry.getCount();
+				if (count > maxCount) {
+					maxCount = count;
+				}
+			}
+
+			for (final Entry<Set<AtomicFeature<?>>> entry : entrySet) {
+				final Set<AtomicFeature<?>> ngram = entry.getElement();
+				List<TermFrequency> tfList = tfDf.get(ngram);
+				if (tfList == null) {
+					tfList = Lists.newLinkedList();
+					tfDf.put(ngram, tfList);
+				}
+
+				final int count = entry.getCount();
+				final double normalizedTf = count / maxCount;
+				final TermFrequency termFrequency = new TermFrequency(id, normalizedTf);
+				tfList.add(termFrequency);
+			}
+		}
 	}
 
 	public double getInvertedDocumentFrequency(final Set<AtomicFeature<?>> compoundFeature) {
@@ -127,5 +135,11 @@ public class TfIdfStore {
 		public double getFrequency() {
 			return tf;
 		}
+	}
+
+	@Override
+	public void onNewHistory(HistoryEntry newHistory) {
+		final Set<Set<AtomicFeature<?>>> frequetPatterns = FP_STORE.getFrequetPatterns();
+		processHistory(tfDf, frequetPatterns, newHistory);
 	}
 }

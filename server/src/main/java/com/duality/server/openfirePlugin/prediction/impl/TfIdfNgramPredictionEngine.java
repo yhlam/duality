@@ -8,7 +8,6 @@ import java.util.Set;
 
 import com.duality.server.openfirePlugin.dataTier.HistoryDatabaseAdapter;
 import com.duality.server.openfirePlugin.dataTier.HistoryEntry;
-import com.duality.server.openfirePlugin.dataTier.NewHistoryHandler;
 import com.duality.server.openfirePlugin.prediction.FeatureKey;
 import com.duality.server.openfirePlugin.prediction.PredictionEngine;
 import com.duality.server.openfirePlugin.prediction.impl.feature.AtomicFeature;
@@ -22,13 +21,11 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.MinMaxPriorityQueue;
 import com.google.common.collect.Sets;
 
-public class TfIdfNgramPredictionEngine extends PredictionEngine implements NewHistoryHandler {
+public class TfIdfNgramPredictionEngine extends PredictionEngine {
 	private static final int MAX_PREDICTION_NUM = 10;
 	private static final int NEXT_ENTRY_TIME_LIMIT = 60 * 60 * 1000; // 1 Hour
 
 	public TfIdfNgramPredictionEngine() {
-		final HistoryDatabaseAdapter historyAdapter = HistoryDatabaseAdapter.singleton();
-		historyAdapter.register(this);
 	}
 	
 	@Override
@@ -69,11 +66,6 @@ public class TfIdfNgramPredictionEngine extends PredictionEngine implements NewH
 		}
 
 		return predictions;
-	}
-
-	@Override
-	public void onNewHistory(HistoryEntry newHistory) {
-		// TODO Auto-generated method stub
 	}
 
 	private Map<FeatureKey<?>, Object> extractFeatures(final HistoryEntry entry) {
