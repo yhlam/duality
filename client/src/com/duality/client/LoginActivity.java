@@ -23,8 +23,8 @@ import com.duality.client.model.XMPPManager;
 
 public class LoginActivity extends Activity {
 
-	private String SERVERIP = "143.89.168.103";
-	private String DOMAIN = "fyp";
+	private String SERVERIP = "59.148.86.156";
+	private String DOMAIN = "hei-linux";
 	private XMPPConnection mXmpp;
 	private ConnectionConfiguration mConnect;
 	private EditText mUsername;

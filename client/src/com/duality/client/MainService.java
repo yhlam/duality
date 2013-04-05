@@ -170,7 +170,7 @@ public class MainService extends Service {
 	@Override
 	public void onDestroy(){
 		super.onDestroy();
-		mDb.close();
-		XMPPManager.singleton().getXMPPConnection().disconnect();
+//		mDb.close();
+//		XMPPManager.singleton().getXMPPConnection().disconnect();
 	}
 }

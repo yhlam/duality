@@ -6,6 +6,7 @@ import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -18,6 +19,7 @@ import org.jivesoftware.smack.filter.PacketFilter;
 import org.jivesoftware.smack.packet.IQ;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Packet;
+import org.jivesoftware.smack.packet.PacketExtension;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -65,7 +67,8 @@ public class ChatlogActivity extends Activity {
 	private ListView mMessageList;
 	private ChatlogReceiver receiver;
 	private Spinner mPrediction;
-	private String[] mPredictionList;
+	private List<String> mPredictionList;
+	private ArrayAdapter<String> predictionAdapter;
 	SQLiteDatabase mDb;
 	ChatDataSQL mHelper;
 
@@ -74,6 +77,7 @@ public class ChatlogActivity extends Activity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		mPredictionList = new ArrayList<String>();
 		setContentView(R.layout.act_chatlog);
 
 		Intent intent = getIntent();
@@ -87,9 +91,12 @@ public class ChatlogActivity extends Activity {
 
 		contactName.setText(recipentName);
 		setListAdapter();
-
+		
+		predictionAdapter = new ArrayAdapter<String>(this,android.R.layout.simple_spinner_item, mPredictionList);
+		predictionAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		mPrediction.setAdapter(predictionAdapter);
+		
 		sendMessage.setOnClickListener(new OnClickListener(){
-
 			@Override
 			public void onClick(View v) {
 				String to = recipentUsername;
@@ -112,6 +119,7 @@ public class ChatlogActivity extends Activity {
 					}else{
 						mMessages.add("You: " + text);
 						adapter.notifyDataSetChanged();
+						message.setText("");
 					}
 				}catch (Exception e){
 					Log.e(TAG, "Failed to send message", e);
@@ -141,7 +149,7 @@ public class ChatlogActivity extends Activity {
 				final String username = xmppManager.getUsername();
 				final String domain = xmppManager.getDomain();
 				final String text = s.toString();
-				final PredictionMessage iq = new PredictionMessage(username, domain, text, recipentName);
+				final PredictionMessage iq = new PredictionMessage(username, domain, text, recipentName + "@" + XMPPManager.singleton().getDomain());
 				final XMPPConnection xmppConnection = xmppManager.getXMPPConnection();
 				xmppConnection.sendPacket(iq);
 			}
@@ -154,11 +162,14 @@ public class ChatlogActivity extends Activity {
 
 			@Override
 			public void processPacket(Packet arg0) {
-				String queryXML = arg0.toXML();
+//				final PacketExtension extension = arg0.getExtension(PredictionMessageInfo.ELEMENT_NAME, PredictionMessageInfo.NAMESPACE);
+				String queryXML = ((IQ)arg0).getChildElementXML();
 				mPredictionList = getPrediction(queryXML);
+//				mPredictionList.add("A");
+				predictionAdapter.notifyDataSetChanged();
 			}
 
-			private String[] getPrediction(String input){
+			private ArrayList<String> getPrediction(String input){
 				ArrayList<String> temp  = new ArrayList<String>();
 				DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();
 				DocumentBuilder b = null;
@@ -183,15 +194,15 @@ public class ChatlogActivity extends Activity {
 					Node prediction = query.getElementsByTagName(PredictionMessageInfo.PREDICTION).item(0);
 					temp.add(prediction.getTextContent());
 				}
-				return (String[])temp.toArray();
+//				return temp;
+				ArrayList<String> test = new ArrayList<String>();
+				test.add("a");
+				test.add("b");
+				return test;
 			}
 
 		}, pFilter);
-
-		mPredictionList = new String[]{"A","B","C"};
-		ArrayAdapter<String> predictionAdapter = new ArrayAdapter<String>(this,android.R.layout.simple_spinner_item, mPredictionList);
-		predictionAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-		mPrediction.setAdapter(predictionAdapter);
+		
 		mPrediction.setOnItemSelectedListener(new Spinner.OnItemSelectedListener(){
 
 			@Override
