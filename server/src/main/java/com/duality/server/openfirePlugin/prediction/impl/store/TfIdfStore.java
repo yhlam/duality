@@ -18,14 +18,14 @@ import com.google.common.collect.Multiset.Entry;
 import com.google.common.collect.Sets;
 
 public class TfIdfStore implements NewHistoryHandler {
+	private static final AtomicFeaturesManager ATOMIC_FEATURES_MANAGER = AtomicFeaturesManager.singleton();
+	private static final FPStore FP_STORE = FPStore.singleton();
+
 	private static final TfIdfStore INSTANCE = new TfIdfStore();
 
 	public static TfIdfStore singleton() {
 		return INSTANCE;
 	}
-	
-	private static final AtomicFeaturesManager ATOMIC_FEATURES_MANAGER = AtomicFeaturesManager.singleton();
-	private static final FPStore FP_STORE = FPStore.singleton();
 
 	private Map<Set<AtomicFeature<?>>, List<TermFrequency>> tfDf;
 	private int totalCount;
