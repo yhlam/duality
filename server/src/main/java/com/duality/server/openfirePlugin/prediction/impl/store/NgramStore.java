@@ -61,7 +61,7 @@ public class NgramStore {
 		final List<HistoryEntry> allHistory = historyDb.getAllHistory();
 		final AtomicFeaturesManager atomicFeaturesManager = AtomicFeaturesManager.singleton();
 		for (final HistoryEntry history : allHistory) {
-			final List<AtomicFeature<?>> features = atomicFeaturesManager.constructFeatures(history);
+			final List<AtomicFeature<?>> features = atomicFeaturesManager.getFeatures(history);
 			final List<AtomicFeature<?>> tokenFeatures = FluentIterable
 					.from(features)
 					.filter(new Predicate<AtomicFeature<?>>() {

@@ -76,7 +76,7 @@ public class TfIdfNgramPredictionEngine extends PredictionEngine {
 		final Set<Set<AtomicFeature<?>>> frequetPatterns = fpStore.getFrequetPatterns();
 
 		final AtomicFeaturesManager atomicFeaturesManager = AtomicFeaturesManager.singleton();
-		final List<AtomicFeature<?>> features = atomicFeaturesManager.constructFeatures(entry);
+		final List<AtomicFeature<?>> features = atomicFeaturesManager.getFeatures(entry);
 		final HashSet<AtomicFeature<?>> featureSet = Sets.newHashSet(features);
 		final List<Set<AtomicFeature<?>>> compoundFeatures = Lists.newLinkedList();
 

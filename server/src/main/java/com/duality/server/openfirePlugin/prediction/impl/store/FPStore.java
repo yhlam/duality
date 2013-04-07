@@ -53,7 +53,7 @@ public class FPStore {
 
 		// Count the frequency of features
 		for (final HistoryEntry history : allHistory) {
-			final List<AtomicFeature<?>> features = atomicFeaturesManager.constructFeatures(history);
+			final List<AtomicFeature<?>> features = atomicFeaturesManager.getFeatures(history);
 			featureList.add(features);
 			featureCount.addAll(features);
 		}

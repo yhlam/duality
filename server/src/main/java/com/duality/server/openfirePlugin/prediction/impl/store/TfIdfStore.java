@@ -55,7 +55,7 @@ public class TfIdfStore implements NewHistoryHandler {
 		final int id = history.getId();
 
 		final Multiset<Set<AtomicFeature<?>>> tf = HashMultiset.create();
-		final List<AtomicFeature<?>> features = ATOMIC_FEATURES_MANAGER.constructFeatures(history);
+		final List<AtomicFeature<?>> features = ATOMIC_FEATURES_MANAGER.getFeatures(history);
 		final HashSet<AtomicFeature<?>> featureSet = Sets.newHashSet(features);
 		for (Set<AtomicFeature<?>> fp: frequetPatterns) {
 			final boolean hasFp = featureSet.containsAll(fp);
