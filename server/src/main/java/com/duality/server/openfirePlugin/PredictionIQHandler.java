@@ -2,6 +2,7 @@ package com.duality.server.openfirePlugin;
 
 import java.util.List;
 
+import org.apache.log4j.Logger;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
@@ -18,6 +19,7 @@ import com.duality.server.openfirePlugin.prediction.PredictionEngine;
 
 public class PredictionIQHandler extends IQHandler {
 
+	private static final Logger LOG = Logger.getLogger(PredictionIQHandler.class);
 	private static final IQHandlerInfo INFO = new IQHandlerInfo(PredictionMessageInfo.ELEMENT_NAME, PredictionMessageInfo.NAMESPACE);
 	private static final PredictionIQHandler INSTANCE = new PredictionIQHandler();
 
@@ -77,7 +79,10 @@ public class PredictionIQHandler extends IQHandler {
 
 		if (lastHistory != null) {
 			final PredictionEngine predictionEngine = PredictionEngine.singleton();
+			final long start = System.currentTimeMillis();
 			final List<String> predictions = predictionEngine.getPredictions(lastHistory, text);
+			final long end = System.currentTimeMillis();
+			LOG.info(String.format("Complete query {" + sender + " -> " + recipent + " : " + text +"} in %dms", end - start));
 
 			for (final String prediction : predictions) {
 				response.addElement(PredictionMessageInfo.PREDICTION).addText(prediction);
