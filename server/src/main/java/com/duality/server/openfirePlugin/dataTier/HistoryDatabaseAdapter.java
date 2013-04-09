@@ -62,17 +62,6 @@ public abstract class HistoryDatabaseAdapter {
 	public abstract HistoryEntry nextHistoryEntry(final int id, final long timeInterval);
 
 	/**
-	 * Get the next History Entry of a sender-receiver pair, within a time interval
-	 * 
-	 * @param currentHistoryEntry
-	 *            The preceding history entry of the returned history entry
-	 * @param timeInterval
-	 *            Only return next history entry if it is sent within timeInterval after the currentHistoryEntry is created; in milliseconds
-	 * @return the next History Entry if it is within the timeInterval; null otherwise.
-	 */
-	public abstract HistoryEntry nextHistoryEntry(final HistoryEntry currentHistoryEntry, final long timeInterval);
-	
-	/**
 	 * Get the last History Entry of a sender-receiver pair
 	 * 
 	 * @param user1
@@ -80,7 +69,6 @@ public abstract class HistoryDatabaseAdapter {
 	 * @return the last HistoryEntry the given user
 	 */
 	public abstract HistoryEntry getLastHistoryEntryOfUsers(final String user1, final String user2);
-	
 
 	/**
 	 * Write a HistoryEntry to database
@@ -92,6 +80,6 @@ public abstract class HistoryDatabaseAdapter {
 	 * @param senderLocation
 	 * @param receiverLocation
 	 */
-	public abstract void addHistory(final String sender, final String receiver, final Date time, final String message,
-			final Location senderLocation, final Location receiverLocation);
+	public abstract void addHistory(final String sender, final String receiver, final Date time, final String message, final Location senderLocation,
+			final Location receiverLocation);
 }
