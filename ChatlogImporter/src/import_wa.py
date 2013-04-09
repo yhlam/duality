@@ -13,7 +13,7 @@ def import_db(in_db, out_db, my_id):
             next_id = out_cur.fetchone()[0] + 1
         except:
             out_cur.execute("drop table if exists chatlog")
-            out_cur.execute("CREATE TABLE chatlog (id numeric, datetime text, senderName text, recipentName text, message text)")
+            out_cur.execute("CREATE TABLE chatlog (id numeric, datetime numeric, senderName text, recipentName text, message text)")
             next_id = 1;
 
         try:
@@ -37,11 +37,10 @@ def fetch_data_from_android(in_cur, my_id, next_id):
         if '@g.us' in sender or '@g.us' in receiver:
             continue
 
-        time = datetime.fromtimestamp(msg[2] // 1000)
-        timestr = time.strftime('%-d/%-m/%y %-I:%M:%S %p')
+        time = msg[2]
         text = msg[3]
         
-        yield (next_id, timestr, sender, receiver, text)
+        yield (next_id, time, sender, receiver, text)
 
         next_id += 1
 
@@ -56,11 +55,10 @@ def fetch_data_from_iphone(in_cur, my_id, next_id):
         if '@g.us' in sender or '@g.us' in receiver:
             continue
 
-        time = datetime.fromtimestamp(msg[2] + 11323 * 60 * 1440)
-        timestr = time.strftime('%-d/%-m/%y %-I:%M:%S %p')
+        time = (msg[2] + 11323 * 60 * 1440) * 1000
         text = msg[3]
         
-        yield (next_id, timestr, sender, receiver, text)
+        yield (next_id, time, sender, receiver, text)
         next_id += 1
 
         

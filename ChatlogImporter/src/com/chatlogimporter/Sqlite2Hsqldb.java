@@ -6,17 +6,12 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Scanner;
 
 public class Sqlite2Hsqldb {
 
 	private static final String READ_SQL = "SELECT DATETIME, SENDERNAME, RECIPENTNAME, MESSAGE FROM CHATLOG;";
 	private static final String INSERT_SQL = "INSERT INTO DUALITY (TIME, SENDER, RECEIVER, MESSAGE) VALUES (?, ?, ?, ?);";
-	private static final DateFormat TIME_FORMAT = new SimpleDateFormat("d/M/yy h:mm:ss a");
 
 	public static void main(final String[] args) {
 		if (!libCheck()) {
@@ -46,24 +41,14 @@ public class Sqlite2Hsqldb {
 		try {
 			final ResultSet resultSet = readStatement.executeQuery(READ_SQL);
 			while (resultSet.next()) {
-				final String timeString = resultSet.getString(1);
+				final long time = resultSet.getLong(1);
 				final String sender = resultSet.getString(2);
 				final String receiver = resultSet.getString(3);
 				final String message = resultSet.getString(4);
 
-				final Date date;
-				try {
-					date = TIME_FORMAT.parse(timeString);
-				} catch (final ParseException e) {
-					System.out.println("Failed to parse the time string: " + timeString);
-					e.printStackTrace();
-					continue;
-				}
-
 				PreparedStatement insertStmt = null;
 				try {
 					insertStmt = outConn.prepareStatement(INSERT_SQL);
-					final long time = date.getTime();
 					insertStmt.setLong(1, time);
 					insertStmt.setString(2, sender);
 					insertStmt.setString(3, receiver);
