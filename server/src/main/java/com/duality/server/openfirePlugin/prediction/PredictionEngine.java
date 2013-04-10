@@ -3,8 +3,8 @@ package com.duality.server.openfirePlugin.prediction;
 import java.util.List;
 import java.util.Map;
 
+import com.duality.server.openfirePlugin.InstanceLoader;
 import com.duality.server.openfirePlugin.dataTier.HistoryEntry;
-import com.duality.server.openfirePlugin.prediction.impl.TfIdfNgramPredictionEngine;
 
 public abstract class PredictionEngine {
 	private static PredictionEngine instance = createPredictionEngine();
@@ -23,7 +23,8 @@ public abstract class PredictionEngine {
 	 * @return A new instance of PredictionEngine
 	 */
 	private static PredictionEngine createPredictionEngine() {
-		return new TfIdfNgramPredictionEngine();
+		final InstanceLoader instanceLoader = InstanceLoader.singleton();
+		return instanceLoader.createInstance(PredictionEngine.class);
 	}
 
 	/**

@@ -3,13 +3,19 @@ package com.duality.server.openfirePlugin.dataTier;
 import java.util.Date;
 import java.util.List;
 
+import com.duality.server.openfirePlugin.InstanceLoader;
 import com.google.common.collect.Lists;
 
 /**
  * HistoryDatabaseAdapter is responsible for read and write the History database
  */
 public abstract class HistoryDatabaseAdapter {
-	private static final HistoryDatabaseAdapter INSTANCE = new OpenfireDbAdapter();
+	private static final HistoryDatabaseAdapter INSTANCE = createDbAdapter();
+	
+	private static HistoryDatabaseAdapter createDbAdapter() {
+		final InstanceLoader instanceLoader = InstanceLoader.singleton();
+		return instanceLoader.createInstance(HistoryDatabaseAdapter.class);
+	}
 
 	/**
 	 * @return An instance of HistoryDatabaseAdapter

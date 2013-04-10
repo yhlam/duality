@@ -18,7 +18,7 @@ public abstract class CachingHistoryDbAdapter extends HistoryDatabaseAdapter {
 	private List<HistoryAndInterval> nextEntry;
 	private Map<ConversationID, HistoryEntry> openConversations;
 
-	public CachingHistoryDbAdapter() {
+	protected CachingHistoryDbAdapter() {
 		cacheLock = new Object();
 		refresh();
 	}

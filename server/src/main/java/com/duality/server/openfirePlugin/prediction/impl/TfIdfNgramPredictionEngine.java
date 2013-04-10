@@ -54,7 +54,7 @@ public class TfIdfNgramPredictionEngine extends PredictionEngine {
 		return null;
 	}
 
-	public TfIdfNgramPredictionEngine() {
+	private TfIdfNgramPredictionEngine() {
 	}
 
 	@Override
