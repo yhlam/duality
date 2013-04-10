@@ -2,9 +2,11 @@ package com.duality.server.openfirePlugin.prediction.impl.feature;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.tartarus.snowball.ext.EnglishStemmer;
@@ -14,10 +16,11 @@ import com.duality.server.openfirePlugin.dataTier.HistoryEntry;
 import com.duality.server.openfirePlugin.prediction.impl.TfIdfUtils;
 import com.duality.server.openfirePlugin.prediction.impl.feature.AtomicFeature.FeatureType;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 public class TokenFeaturesProvider implements AtomicFeaturesProvider {
 
-	private static final Map<String, String> emoji = getEmojiMapping();
+	private static final Map<String, String> EMOJI = getEmojiMapping();
 
 	private static Map<String, String> getEmojiMapping() {
 		final Map<String, String> emoji = new HashMap<String, String>();
@@ -49,17 +52,28 @@ public class TokenFeaturesProvider implements AtomicFeaturesProvider {
 		return emoji;
 	}
 
+	private static final Set<String> ESCAPE_SYMBOL = getEscapeSymbols();
+	
+	private static final Set<String> getEscapeSymbols() {
+		return Sets.newHashSet(Arrays.asList("!", "?", "！", "？"));
+	}
+
 	public static List<String> extractTokens(final String message) {
+		final List<String> tokens = Lists.newLinkedList();
 
 		final StringBuilder msgBuilder = new StringBuilder();
 		final String[] characters = message.split("");
 
 		for (final String character : characters) {
-			final String replacement = emoji.get(character);
+			final String replacement = EMOJI.get(character);
 			if (replacement != null) {
 				msgBuilder.append(replacement);
 			} else {
 				msgBuilder.append(character);
+			}
+
+			if(ESCAPE_SYMBOL.contains(character)) {
+				tokens.add(character);
 			}
 		}
 
@@ -68,7 +82,6 @@ public class TokenFeaturesProvider implements AtomicFeaturesProvider {
 		final IKTokenizer ikTokenizer = new IKTokenizer(reader, false);
 		final CharTermAttribute charTermAttribute = ikTokenizer.addAttribute(CharTermAttribute.class);
 		final EnglishStemmer stemmer = new EnglishStemmer();
-		final List<String> tokens = Lists.newLinkedList();
 		try {
 			while (ikTokenizer.incrementToken()) {
 				final String term = charTermAttribute.toString();
