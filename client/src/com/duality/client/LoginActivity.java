@@ -23,8 +23,8 @@ import com.duality.client.model.XMPPManager;
 
 public class LoginActivity extends Activity {
 
-	private String SERVERIP = "59.148.86.156";
-	private String DOMAIN = "hei-linux";
+	private String SERVERIP = "143.89.168.103";
+	private String DOMAIN = "fyp";
 	private XMPPConnection mXmpp;
 	private ConnectionConfiguration mConnect;
 	private EditText mUsername;
@@ -36,17 +36,19 @@ public class LoginActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.act_login);
-
+		
 		mUsername = (EditText) this.findViewById(R.id.login_username);
 		mPwd = (EditText) this.findViewById(R.id.login_password);
 		mUserForm = (LinearLayout) this.findViewById(R.id.login_form);
 		mStatus = (LinearLayout) this.findViewById(R.id.login_status);
-		Button signIn = (Button) this.findViewById(R.id.login_signin);
-		Button serverSet = (Button) this.findViewById(R.id.login_server);
+		
+		final Button signIn = (Button) this.findViewById(R.id.login_signin);
+		final Button serverSet = (Button) this.findViewById(R.id.login_server);
 		final EditText domain = (EditText) this.findViewById(R.id.login_domain);
 		final EditText ip = (EditText) this.findViewById(R.id.login_IP);
 
 		signIn.setOnClickListener(new Button.OnClickListener(){
+			
 			@Override
 			public void onClick(View v) {
 				mUserForm.setVisibility(View.GONE);
@@ -65,7 +67,32 @@ public class LoginActivity extends Activity {
 
 		});
 	}
+	
+	@Override
+	public void onPause(){
+		super.onPause();
+	}
 
+	@Override
+	public void onStart(){
+		super.onStart();
+	}
+	
+	@Override
+	public void onResume(){
+		super.onResume();
+	}
+	
+	@Override
+	public void onStop(){
+		super.onStop();
+	}
+	
+	@Override
+	public void onDestroy(){
+		super.onDestroy();
+	}
+	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
@@ -92,6 +119,8 @@ public class LoginActivity extends Activity {
 			    }
 			    mConnect.setTruststorePath(path);
 			}
+			
+			// Setting up XMPP Connection and updating the connection to the XMPPMaganer Singleton
 			mXmpp = new XMPPConnection(mConnect);
 			try{
 				mXmpp.connect();
@@ -113,7 +142,7 @@ public class LoginActivity extends Activity {
 		protected void onPostExecute(Integer result){
 			switch(result){
 			case 1:
-				startActivity(new Intent(LoginActivity.this, MainActivity.class));
+				startActivity(new Intent(LoginActivity.this, ContactActivity.class));
 				break;
 			case -1:
 				Toast.makeText(getApplicationContext(),
