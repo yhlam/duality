@@ -15,7 +15,7 @@ public abstract class CachingHistoryDbAdapter extends HistoryDatabaseAdapter {
 	private final Object cacheLock;
 	private List<HistoryEntry> cache;
 	private RangeMap<Integer, Integer> offsets;
-	private List<HistoryAndInterval> nextEntry;
+	private List<NextHistoryInfo> nextEntry;
 	private Map<ConversationID, HistoryEntry> openConversations;
 
 	protected CachingHistoryDbAdapter() {
@@ -72,7 +72,9 @@ public abstract class CachingHistoryDbAdapter extends HistoryDatabaseAdapter {
 						final long startTimestamp = startTime.getTime();
 						final long endTimestamp = endTime.getTime();
 						final long interval = endTimestamp - startTimestamp;
-						final HistoryAndInterval historyAndInterval = new HistoryAndInterval(historyEntry, interval);
+						final String lastSender = openEntry.getSender();
+						final MessageType type = sender.equals(lastSender) ? MessageType.SUPPLEMENT : MessageType.REPLY;
+						final NextHistoryInfo historyAndInterval = new NextHistoryInfo(historyEntry, interval, type);
 
 						final int index = getIndex(openEntry);
 						nextEntry.set(index, historyAndInterval);
@@ -100,15 +102,30 @@ public abstract class CachingHistoryDbAdapter extends HistoryDatabaseAdapter {
 	}
 
 	@Override
-	public HistoryEntry nextHistoryEntry(final int id, final long timeInterval) {
+	public HistoryEntry nextHistoryEntry(final int id, final long timeInterval, final MessageType type) {
+		long nextTimeInterval = timeInterval;
+		int nextId = id;
 		synchronized (cacheLock) {
-			final HistoryAndInterval historyAndInterval = getValueById(id, nextEntry);
-			if (historyAndInterval == null) {
-				return null;
+			while (nextTimeInterval >= 0) {
+				final NextHistoryInfo historyInfo = getValueById(nextId, nextEntry);
+				if (historyInfo == null) {
+					return null;
+				}
+
+				if (historyInfo.type == type && historyInfo.interval <= timeInterval) {
+					return historyInfo.history;
+				}
+
+				if (type == MessageType.SUPPLEMENT && historyInfo.type == MessageType.REPLY) {
+					return null;
+				}
+
+				nextId = historyInfo.history.getId();
+				nextTimeInterval -= historyInfo.interval;
 			}
-			final HistoryEntry history = historyAndInterval.getHistoryIfWithin(timeInterval);
-			return history;
 		}
+
+		return null;
 	}
 
 	@Override
@@ -148,7 +165,9 @@ public abstract class CachingHistoryDbAdapter extends HistoryDatabaseAdapter {
 				final long startTimestamp = startTime.getTime();
 				final long endTimestamp = endTime.getTime();
 				final long interval = endTimestamp - startTimestamp;
-				final HistoryAndInterval historyAndInterval = new HistoryAndInterval(historyEntry, interval);
+				final String lastSender = lastEntry.getSender();
+				final MessageType type = sender.equals(lastSender) ? MessageType.SUPPLEMENT : MessageType.REPLY;
+				final NextHistoryInfo historyAndInterval = new NextHistoryInfo(historyEntry, interval, type);
 
 				final int nextEntryId = getIndex(lastEntry);
 				nextEntry.set(nextEntryId, historyAndInterval);
@@ -228,21 +247,15 @@ public abstract class CachingHistoryDbAdapter extends HistoryDatabaseAdapter {
 		}
 	}
 
-	private static class HistoryAndInterval {
-		private final HistoryEntry history;
-		private final long interval;
+	private static class NextHistoryInfo {
+		public final HistoryEntry history;
+		public final long interval;
+		public final MessageType type;
 
-		public HistoryAndInterval(final HistoryEntry history, final long interval) {
+		public NextHistoryInfo(final HistoryEntry history, final long interval, final MessageType type) {
 			this.history = history;
 			this.interval = interval;
-		}
-
-		public HistoryEntry getHistoryIfWithin(final long interval) {
-			if (this.interval <= interval) {
-				return history;
-			}
-
-			return null;
+			this.type = type;
 		}
 	}
 }

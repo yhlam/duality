@@ -5,6 +5,7 @@ import java.util.Map;
 
 import com.duality.server.openfirePlugin.InstanceLoader;
 import com.duality.server.openfirePlugin.dataTier.HistoryEntry;
+import com.duality.server.openfirePlugin.dataTier.MessageType;
 
 public abstract class PredictionEngine {
 	private static PredictionEngine instance = createPredictionEngine();
@@ -32,12 +33,12 @@ public abstract class PredictionEngine {
 	 * @param incompletedMessage Incompleted message typed by the user
 	 * @return List of ranked predictions
 	 */
-	public abstract List<String> getPredictions(HistoryEntry entry, String incompletedMessage);
+	public abstract List<String> getPredictions(HistoryEntry entry, String incompletedMessage, final MessageType type);
 	
 	/**
 	 * @param context An feature to value map
 	 * @param incompletedMessage Incompleted message typed by the user
 	 * @return List of ranked predictions
 	 */
-	public abstract List<String> getPredictions(Map<FeatureKey<?>, Object> context, String incompletedMessage);
+	public abstract List<String> getPredictions(Map<FeatureKey<?>, Object> context, String incompletedMessage, MessageType type);
 }

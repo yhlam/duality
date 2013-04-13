@@ -10,6 +10,7 @@ import java.util.Set;
 
 import com.duality.server.openfirePlugin.dataTier.HistoryDatabaseAdapter;
 import com.duality.server.openfirePlugin.dataTier.HistoryEntry;
+import com.duality.server.openfirePlugin.dataTier.MessageType;
 import com.duality.server.openfirePlugin.prediction.FeatureKey;
 import com.duality.server.openfirePlugin.prediction.PredictionEngine;
 import com.duality.server.openfirePlugin.prediction.impl.feature.AtomicFeature;
@@ -58,14 +59,14 @@ public class TfIdfNgramPredictionEngine extends PredictionEngine {
 	}
 
 	@Override
-	public List<String> getPredictions(final HistoryEntry entry, final String incompletedMessage) {
+	public List<String> getPredictions(final HistoryEntry entry, final String incompletedMessage, final MessageType type) {
 		final TfIdfFeatureStore tfIdfFeatureStore = TfIdfFeatureStore.singleton();
 		final Map<FeatureKey<?>, Object> context = tfIdfFeatureStore.getFeatures(entry);
-		return getPredictions(context, incompletedMessage);
+		return getPredictions(context, incompletedMessage, type);
 	}
 
 	@Override
-	public List<String> getPredictions(final Map<FeatureKey<?>, Object> context, final String incompletedMessage) {
+	public List<String> getPredictions(final Map<FeatureKey<?>, Object> context, final String incompletedMessage, final MessageType type) {
 		final TfIdfStore tfIdfStore = TfIdfStore.singleton();
 		final Set<FeatureKey<?>> contextFeatures = context.keySet();
 		final ClosenessAggregator aggregator = createAggregator();
@@ -82,7 +83,7 @@ public class TfIdfNgramPredictionEngine extends PredictionEngine {
 			for (final TermFrequency tf : tfs) {
 				final int id = tf.getDocumentId();
 
-				final HistoryEntry nextHistory = historyDb.nextHistoryEntry(id, NEXT_ENTRY_TIME_LIMIT);
+				final HistoryEntry nextHistory = historyDb.nextHistoryEntry(id, NEXT_ENTRY_TIME_LIMIT, type);
 				if (nextHistory == null) {
 					continue;
 				}

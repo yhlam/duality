@@ -15,6 +15,7 @@ import org.xmpp.packet.PacketError.Condition;
 import com.duality.api.PredictionMessageInfo;
 import com.duality.server.openfirePlugin.dataTier.HistoryDatabaseAdapter;
 import com.duality.server.openfirePlugin.dataTier.HistoryEntry;
+import com.duality.server.openfirePlugin.dataTier.MessageType;
 import com.duality.server.openfirePlugin.prediction.PredictionEngine;
 
 public class PredictionIQHandler extends IQHandler {
@@ -78,9 +79,11 @@ public class PredictionIQHandler extends IQHandler {
 		final HistoryEntry lastHistory = historyDbAdapter.getLastHistoryEntryOfUsers(sender, recipent);
 
 		if (lastHistory != null) {
+			final String lastSender = lastHistory.getSender();
+			final MessageType type = sender.equals(lastSender) ? MessageType.SUPPLEMENT : MessageType.REPLY;
 			final PredictionEngine predictionEngine = PredictionEngine.singleton();
 			final long start = System.currentTimeMillis();
-			final List<String> predictions = predictionEngine.getPredictions(lastHistory, text);
+			final List<String> predictions = predictionEngine.getPredictions(lastHistory, text, type);
 			final long end = System.currentTimeMillis();
 			LOG.info(String.format("Complete query {" + sender + " -> " + recipent + " : " + text +"} in %dms", end - start));
 
