@@ -21,15 +21,18 @@ import com.duality.server.openfirePlugin.prediction.impl.store.TfIdfStore;
 import com.duality.server.openfirePlugin.prediction.impl.store.TfIdfStore.TermFrequency;
 import com.google.common.base.Function;
 import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.MinMaxPriorityQueue;
+import com.google.common.collect.Multiset;
 import com.google.common.collect.Table;
 
 public class TfIdfNgramPredictionEngine extends PredictionEngine {
 	private static final int MAX_PREDICTION_NUM = 10;
 	private static final int NEXT_ENTRY_TIME_LIMIT = 60 * 60 * 1000; // 1 Hour
+	private static final double MIN_CLOSENESS = 0.0;
 	private static final Class<? extends ClosenessAggregator> AGGREGATOR = DotProductAggregator.class;
 
 	private static final ClosenessAggregator createAggregator() {
@@ -102,8 +105,12 @@ public class TfIdfNgramPredictionEngine extends PredictionEngine {
 		}
 
 		final MinMaxPriorityQueue<MessageCloseness> queue = MinMaxPriorityQueue.maximumSize(MAX_PREDICTION_NUM).create();
+		final double minCloseness = aggregator.getMinCloseness(context);
 		for (final MessageCloseness messageCloseness : aggregator) {
-			queue.add(messageCloseness);
+			final double closeness = messageCloseness.getCloseness();
+			if (closeness >= minCloseness) {
+				queue.add(messageCloseness);
+			}
 		}
 
 		final List<String> predictions = Lists.newArrayListWithCapacity(queue.size());
@@ -135,6 +142,10 @@ public class TfIdfNgramPredictionEngine extends PredictionEngine {
 			return message;
 		}
 
+		public double getCloseness() {
+			return closeness;
+		}
+
 		@Override
 		public int compareTo(final MessageCloseness that) {
 			if (this.closeness > that.closeness) {
@@ -154,54 +165,104 @@ public class TfIdfNgramPredictionEngine extends PredictionEngine {
 
 	private static interface ClosenessAggregator extends Iterable<MessageCloseness> {
 		public void offer(final String message, final int id, final double tfIdfProduct);
+
+		public double getMinCloseness(final Map<FeatureKey<?>, Object> context);
 	}
 
 	private static class DotProductAggregator implements ClosenessAggregator {
 
-		private final Map<String, Double> closenesses = Maps.newHashMap();
+		private final Map<String, Multiset<String>> key2Message = Maps.newHashMap();
+		private final Map<String, List<Double>> closenesses = Maps.newHashMap();
 
 		@Override
 		public void offer(final String message, final int id, final double tfIdfProduct) {
-			final Double existing = closenesses.get(message);
+			final String key = message.toLowerCase();
+			final List<Double> existing = closenesses.get(message);
 			if (existing == null) {
-				closenesses.put(message, tfIdfProduct);
+				final List<Double> tfIdfs = Lists.newLinkedList();
+				tfIdfs.add(tfIdfProduct);
+				closenesses.put(message, tfIdfs);
 			} else {
-				final double total = existing + tfIdfProduct;
-				closenesses.put(message, total);
+				existing.add(tfIdfProduct);
+				closenesses.put(message, existing);
 			}
+
+			Multiset<String> messages = key2Message.get(key);
+			if (messages == null) {
+				messages = HashMultiset.create();
+				key2Message.put(key, messages);
+			}
+			messages.add(message);
 		}
 
 		@Override
 		public Iterator<MessageCloseness> iterator() {
-			final Set<Entry<String, Double>> entrySet = closenesses.entrySet();
-			final Iterator<Entry<String, Double>> iterator = entrySet.iterator();
-			final Iterator<MessageCloseness> closenessIt = Iterators.transform(iterator, new Function<Entry<String, Double>, MessageCloseness>() {
+			final Set<Entry<String, List<Double>>> entrySet = closenesses.entrySet();
+			final Iterator<Entry<String, List<Double>>> iterator = entrySet.iterator();
+			final Iterator<MessageCloseness> closenessIt = Iterators.transform(iterator, new Function<Entry<String, List<Double>>, MessageCloseness>() {
 				@Override
-				public MessageCloseness apply(final Entry<String, Double> entry) {
-					final String message = entry.getKey();
-					final Double closeness = entry.getValue();
+				public MessageCloseness apply(final Entry<String, List<Double>> entry) {
+					final String key = entry.getKey();
+					final Multiset<String> messages = key2Message.get(key);
+					final Set<com.google.common.collect.Multiset.Entry<String>> entrySet = messages.entrySet();
+					int maxCount = 0;
+					String message = null;
+					for (final com.google.common.collect.Multiset.Entry<String> messageCount : entrySet) {
+						final int count = messageCount.getCount();
+						if (count > maxCount) {
+							maxCount = count;
+							message = messageCount.getElement();
+						}
+					}
+					final List<Double> closenesses = entry.getValue();
+					final int size = closenesses.size();
+					final double closeness;
+					if (size == 1) {
+						closeness = closenesses.get(0);
+					} else {
+						double total = 0.0;
+						for (final Double value : closenesses) {
+							total += value;
+						}
+						total /= size - Math.log(size);
+						closeness = total;
+					}
+
 					return new MessageCloseness(message, closeness);
 				}
 			});
 
 			return closenessIt;
 		}
+
+		@Override
+		public double getMinCloseness(final Map<FeatureKey<?>, Object> context) {
+			return MIN_CLOSENESS;
+		}
 	}
 
-	@SuppressWarnings("unused")
 	private static class ConsineAggregator implements ClosenessAggregator {
 
+		private final Map<String, Multiset<String>> key2Message = Maps.newHashMap();
 		private final Table<String, Integer, Double> closenesses = HashBasedTable.create();
 
 		@Override
 		public void offer(final String message, final int id, final double tfIdfProduct) {
-			final Double existing = closenesses.get(message, id);
+			final String key = message.toLowerCase();
+			final Double existing = closenesses.get(key, id);
 			if (existing == null) {
-				closenesses.put(message, id, tfIdfProduct);
+				closenesses.put(key, id, tfIdfProduct);
 			} else {
 				final double total = existing + tfIdfProduct;
-				closenesses.put(message, id, total);
+				closenesses.put(key, id, total);
 			}
+
+			Multiset<String> messages = key2Message.get(key);
+			if (messages == null) {
+				messages = HashMultiset.create();
+				key2Message.put(key, messages);
+			}
+			messages.add(message);
 		}
 
 		@Override
@@ -234,12 +295,32 @@ public class TfIdfNgramPredictionEngine extends PredictionEngine {
 						closeness += consine;
 					}
 
-					final String message = entry.getKey();
+					final int size = dotProductEntries.size();
+					final double discount = size - Math.log10(size);
+					closeness /= discount;
+
+					final String key = entry.getKey();
+					final Multiset<String> messages = key2Message.get(key);
+					final Set<com.google.common.collect.Multiset.Entry<String>> entrySet = messages.entrySet();
+					int maxCount = 0;
+					String message = null;
+					for (final com.google.common.collect.Multiset.Entry<String> messageCount : entrySet) {
+						final int count = messageCount.getCount();
+						if (count > maxCount) {
+							maxCount = count;
+							message = messageCount.getElement();
+						}
+					}
 					return new MessageCloseness(message, closeness);
 				}
 			});
 
 			return closenessIt;
+		}
+
+		@Override
+		public double getMinCloseness(final Map<FeatureKey<?>, Object> context) {
+			return calcModulus(context) * MIN_CLOSENESS;
 		}
 
 		private double calcModulus(final Map<FeatureKey<?>, Object> context) {
