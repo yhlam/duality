@@ -38,16 +38,17 @@ public abstract class CachingHistoryDbAdapter extends HistoryDatabaseAdapter {
 			if (size > 0) {
 				// Initialize offsets
 				final HistoryEntry firstHistory = allHistories.get(0);
-				int offset = -firstHistory.getId();
-				final int lower = 0;
+				int lower = firstHistory.getId();
+				int offset = -lower;
 				int count = 0;
 
 				for (final HistoryEntry history : allHistories) {
 					final int id = history.getId();
-					final int offsetAdj = id + offset - count;
+					final int offsetAdj = count - id - offset;
 					if (offsetAdj != 0) {
-						offsets.put(Range.closedOpen(lower, count), offset);
+						offsets.put(Range.closedOpen(lower, id), offset);
 						offset = offset + offsetAdj;
+						lower = id;
 					}
 					count++;
 				}
