@@ -51,6 +51,10 @@ public class TfIdfFeatureStore {
 		return consturctFeatures(history);
 	}
 
+	public void refresh() {
+		featureCache.clear();
+	}
+
 	private Map<FeatureKey<?>, Object> consturctFeatures(final HistoryEntry entry) {
 		final Map<FeatureKey<?>, Object> tfIdfs = Maps.newHashMap();
 		final int id = entry.getId();
