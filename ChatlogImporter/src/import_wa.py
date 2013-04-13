@@ -26,7 +26,8 @@ def import_db(in_db, out_db, my_id):
 
 
 def fetch_data_from_android(in_cur, my_id, next_id):
-    in_cur.execute("select key_from_me from_me, key_remote_jid as jid, timestamp, data from messages where data is not null")
+    last_timestamp = 0
+    in_cur.execute("select key_from_me from_me, key_remote_jid as jid, timestamp, data from messages where data is not null order by _id")
     messages = in_cur.fetchall()
     
     for msg in messages:
@@ -37,8 +38,12 @@ def fetch_data_from_android(in_cur, my_id, next_id):
         if '@g.us' in sender or '@g.us' in receiver:
             continue
 
-        time = msg[2]
         text = msg[3]
+
+        time = msg[2]
+        if time <= last_timestamp:
+            time = last_timestamp + 1
+        last_timestamp = time
         
         yield (next_id, time, sender, receiver, text)
 
@@ -46,7 +51,8 @@ def fetch_data_from_android(in_cur, my_id, next_id):
 
 
 def fetch_data_from_iphone(in_cur, my_id, next_id):
-    in_cur.execute("select zfromjid, ztojid, zmessagedate, ztext from zwamessage where ztext is not null")
+    last_timestamp = 0
+    in_cur.execute("select zfromjid, ztojid, zmessagedate, ztext from zwamessage where ztext is not null order by z_pk")
     data = in_cur.fetchall()
     for msg in data:
         sender = msg[0] if msg[0] else my_id
@@ -55,8 +61,12 @@ def fetch_data_from_iphone(in_cur, my_id, next_id):
         if '@g.us' in sender or '@g.us' in receiver:
             continue
 
-        time = (msg[2] + 11323 * 60 * 1440) * 1000
         text = msg[3]
+        
+        time = int((msg[2] + 11323 * 60 * 1440) * 1000)
+        if time <= last_timestamp:
+            time = last_timestamp + 1
+        last_timestamp = time
         
         yield (next_id, time, sender, receiver, text)
         next_id += 1
