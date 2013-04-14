@@ -181,10 +181,10 @@ public class TfIdfNgramPredictionEngine extends PredictionEngine {
 			if (existing == null) {
 				final List<Double> tfIdfs = Lists.newLinkedList();
 				tfIdfs.add(tfIdfProduct);
-				closenesses.put(message, tfIdfs);
+				closenesses.put(key, tfIdfs);
 			} else {
 				existing.add(tfIdfProduct);
-				closenesses.put(message, existing);
+				closenesses.put(key, existing);
 			}
 
 			Multiset<String> messages = key2Message.get(key);
