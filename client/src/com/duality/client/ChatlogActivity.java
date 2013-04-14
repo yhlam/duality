@@ -11,7 +11,6 @@ import org.jivesoftware.smack.filter.PacketFilter;
 import org.jivesoftware.smack.filter.PacketIDFilter;
 import org.jivesoftware.smack.packet.IQ;
 import org.jivesoftware.smack.packet.Message;
-import org.jivesoftware.smack.packet.Packet;
 import org.jivesoftware.smack.provider.IQProvider;
 import org.jivesoftware.smack.provider.ProviderManager;
 import org.xmlpull.v1.XmlPullParser;
@@ -62,7 +61,6 @@ public class ChatlogActivity extends Activity {
 	private ChatDataSQL mHelper;
 	private XMPPConnection mConn;
 	private int check = 0;
-	//	private String recipentTable = "Recipents";
 
 	@Override
 	public void onStart(){
@@ -74,12 +72,12 @@ public class ChatlogActivity extends Activity {
 		mReceiver = new ChatlogReceiver();
 		registerReceiver(mReceiver, filter);
 	}
-	
+
 	@Override
 	public void onPause(){
 		super.onPause();
 	}
-	
+
 	@Override
 	public void onStop(){
 		super.onStop();
@@ -93,12 +91,12 @@ public class ChatlogActivity extends Activity {
 	public void onDestroy(){
 		super.onDestroy();
 	}
-	
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.act_chatlog);
-		
+
 		Intent intent = getIntent();
 		mRecipentName = (String) intent.getExtras().getString("name");
 		mMessageList = (ListView) this.findViewById(R.id.chatlog_chatlog);
@@ -107,14 +105,14 @@ public class ChatlogActivity extends Activity {
 		final TextView contactName = (TextView) findViewById(R.id.chatlog_recipentName);
 		final Button sendMessage = (Button) this.findViewById(R.id.chatlog_send);
 		mConn = XMPPManager.singleton().getXMPPConnection();
-		
+
 		contactName.setText(mRecipentName);
 		mPredictionList = new ArrayList<String>();
 		setListAdapter();
 		setPredictionAdapter();
-		
-		ProviderManager pm = ProviderManager.getInstance();
-		pm.addIQProvider(PredictionMessageInfo.ELEMENT_NAME, PredictionMessageInfo.NAMESPACE, new IQProvider(){
+
+
+		ProviderManager.getInstance().addIQProvider(PredictionMessageInfo.ELEMENT_NAME, PredictionMessageInfo.NAMESPACE, new IQProvider(){
 			@Override
 			public IQ parseIQ(XmlPullParser arg0) throws Exception {
 				int eventType = arg0.getEventType();
@@ -147,7 +145,43 @@ public class ChatlogActivity extends Activity {
 				}
 				return iq;
 			}
+		});
 
+		message.addTextChangedListener(new TextWatcher(){
+			PacketCollector collector;
+
+			@Override
+			public void afterTextChanged(Editable arg0) {
+
+			}
+
+			@Override
+			public void beforeTextChanged(CharSequence s, int start, int count,
+					int after) {
+
+			}
+
+			@Override
+			public void onTextChanged(CharSequence s, int start, int before,
+					int count) {
+				String username = XMPPManager.singleton().getUsername();
+				String domain = XMPPManager.singleton().getDomain();
+				String text = s.toString();
+				if(!text.equals("")){
+					PredictionMessage iq = new PredictionMessage(username, domain, text, mRecipentName + "@" + domain);
+					String packetID = iq.getPacketID();
+					PacketFilter filter = new PacketIDFilter(packetID);
+					collector = XMPPManager.singleton().getXMPPConnection().createPacketCollector(filter);
+					XMPPManager.singleton().getXMPPConnection().sendPacket(iq);
+					IQ prediction = (IQ) collector.nextResult(2000);
+					if(prediction != null){
+						//mPredictionList = prediction.getList();
+						setPredictionAdapter();
+					}else{
+						collector.cancel();
+					}
+				}
+			}
 		});
 
 		sendMessage.setOnClickListener(new OnClickListener(){
@@ -181,7 +215,7 @@ public class ChatlogActivity extends Activity {
 				}
 			}
 		});
-		
+
 		mPrediction.setOnItemSelectedListener(new Spinner.OnItemSelectedListener(){
 			@Override
 			public void onItemSelected(AdapterView<?> parent, View arg1,
@@ -202,99 +236,62 @@ public class ChatlogActivity extends Activity {
 		//Establish Database to read the real content
 		mHelper = new ChatDataSQL(this, DB_NAME);
 		mDb = mHelper.getReadableDatabase();
-		final Cursor cursor = mDb.rawQuery("select username from Recipents WHERE name=?", new String[]{String.valueOf(mRecipentName)});
+		Cursor cursor = mDb.rawQuery("select username from Recipents WHERE name=?", new String[]{String.valueOf(mRecipentName)});
 		int resultCount = cursor.getCount();
 		if(resultCount != 0){
 			cursor.moveToFirst();
 			mRecipentUsername = cursor.getString(0);
 		}
 		cursor.close();
-
-		message.addTextChangedListener(new TextWatcher(){
-			PacketCollector collector;
-			
-			@Override
-			public void afterTextChanged(Editable arg0) {
-				collector.cancel();
-			}
-
-			@Override
-			public void beforeTextChanged(CharSequence s, int start, int count,
-					int after) {
-				
-			}
-
-			@Override
-			public void onTextChanged(CharSequence s, int start, int before,
-					int count) {
-				final String username = XMPPManager.singleton().getUsername();
-				final String domain = XMPPManager.singleton().getDomain();
-				final String text = s.toString();
-				if(!text.equals("")){
-					final PredictionMessage iq = new PredictionMessage(username, domain, text, mRecipentName + "@" + domain);
-					final String packetID = iq.getPacketID();
-					final PacketFilter filter = new PacketIDFilter(packetID);
-					collector = mConn.createPacketCollector(filter);
-					mConn.sendPacket(iq);
-					PredictionResultModel prediction = (PredictionResultModel) collector.nextResult(2000);
-					if(prediction != null){
-						mPredictionList = prediction.getList();
-						setPredictionAdapter();
-					}else{
-						collector.cancel();
-					}
-				}
-			}
-		});
 		// PacketCollector to replace PacketListener
 
 
-				// Add PacketListener to IQ Packets
-				//		PacketFilter pFilter = new IQTypeFilter(IQ.Type.RESULT);
-				//		mConn.addPacketListener(new PacketListener(){
-				//
-				//			@Override
-				//			public void processPacket(Packet arg0) {
-				//				//				final PacketExtension extension = arg0.getExtension(PredictionMessageInfo.ELEMENT_NAME, PredictionMessageInfo.NAMESPACE);
-				//				String queryXML = ((IQ)arg0).getChildElementXML();
-				//				mPredictionList = getPrediction(queryXML);
-				//				//				mPredictionList.add("A");
-				//				predictionAdapter.notifyDataSetChanged();
-				//			}
-				//
-				//			private ArrayList<String> getPrediction(String input){
-				//				ArrayList<String> temp  = new ArrayList<String>();
-				//				DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();
-				//				DocumentBuilder b = null;
-				//				try {
-				//					b = f.newDocumentBuilder();
-				//				} catch (ParserConfigurationException e) {
-				//					Log.e(TAG, "Failed to create a document builder", e);
-				//				}
-				//				Document doc = null;
-				//				try {
-				//					doc = b.parse(new ByteArrayInputStream(input.getBytes("UTF-8")));
-				//				} catch (UnsupportedEncodingException e) {
-				//					Log.e(TAG, "Divice does not support UTF-8", e);
-				//				} catch (SAXException e) {
-				//					Log.e(TAG, "Failed to parse the prediction result packet", e);
-				//				} catch (IOException e) {
-				//					Log.e(TAG, "IOException during parsing of prediction result packet", e);
-				//				}
-				//				NodeList queries = doc.getElementsByTagName(PredictionMessageInfo.ELEMENT_NAME);
-				//				for (int i = 0; i < queries.getLength(); i++) {
-				//					Element query = (Element) queries.item(i);
-				//					Node prediction = query.getElementsByTagName(PredictionMessageInfo.PREDICTION).item(0);
-				//					temp.add(prediction.getTextContent());
-				//				}
-				//				//				return temp;
-				//				ArrayList<String> test = new ArrayList<String>();
-				//				test.add("a");
-				//				test.add("b");
-				//				return test;
-				//			}
-				//
-				//		}, pFilter);
+		// Add PacketListener to IQ Packets
+		//		PacketFilter pFilter = new IQTypeFilter(IQ.Type.RESULT);
+		//		mConn.addPacketListener(new PacketListener(){
+		//
+		//			@Override
+		//			public void processPacket(Packet arg0) {
+		//				//				final PacketExtension extension = arg0.getExtension(PredictionMessageInfo.ELEMENT_NAME, PredictionMessageInfo.NAMESPACE);
+		//				String queryXML = ((IQ)arg0).getChildElementXML();
+		//				mPredictionList = getPrediction(queryXML);
+		//				//				mPredictionList.add("A");
+		//				predictionAdapter.notifyDataSetChanged();
+		//			}
+		//
+		//			private ArrayList<String> getPrediction(String input){
+		//				ArrayList<String> temp  = new ArrayList<String>();
+		//				DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();
+		//				DocumentBuilder b = null;
+		//				try {
+		//					b = f.newDocumentBuilder();
+		//				} catch (ParserConfigurationException e) {
+		//					Log.e(TAG, "Failed to create a document builder", e);
+		//				}
+		//				Document doc = null;
+		//				try {
+		//					doc = b.parse(new ByteArrayInputStream(input.getBytes("UTF-8")));
+		//				} catch (UnsupportedEncodingException e) {
+		//					Log.e(TAG, "Divice does not support UTF-8", e);
+		//				} catch (SAXException e) {
+		//					Log.e(TAG, "Failed to parse the prediction result packet", e);
+		//				} catch (IOException e) {
+		//					Log.e(TAG, "IOException during parsing of prediction result packet", e);
+		//				}
+		//				NodeList queries = doc.getElementsByTagName(PredictionMessageInfo.ELEMENT_NAME);
+		//				for (int i = 0; i < queries.getLength(); i++) {
+		//					Element query = (Element) queries.item(i);
+		//					Node prediction = query.getElementsByTagName(PredictionMessageInfo.PREDICTION).item(0);
+		//					temp.add(prediction.getTextContent());
+		//				}
+		//				//				return temp;
+		//				ArrayList<String> test = new ArrayList<String>();
+		//				test.add("a");
+		//				test.add("b");
+		//				return test;
+		//			}
+		//
+		//		}, pFilter);
 
 	}	
 

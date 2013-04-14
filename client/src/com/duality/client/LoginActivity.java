@@ -23,7 +23,7 @@ import com.duality.client.model.XMPPManager;
 
 public class LoginActivity extends Activity {
 
-	private String SERVERIP = "143.89.168.103";
+	private String SERVERIP = "192.168.0.198";
 	private String DOMAIN = "fyp";
 	private XMPPConnection mXmpp;
 	private ConnectionConfiguration mConnect;
@@ -142,7 +142,7 @@ public class LoginActivity extends Activity {
 		protected void onPostExecute(Integer result){
 			switch(result){
 			case 1:
-				startActivity(new Intent(LoginActivity.this, ContactActivity.class));
+				startActivity(new Intent(LoginActivity.this, MainActivity.class));
 				break;
 			case -1:
 				Toast.makeText(getApplicationContext(),
