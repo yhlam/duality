@@ -60,7 +60,8 @@ public class ChatlogActivity extends Activity {
 	private SQLiteDatabase mDb;
 	private ChatDataSQL mHelper;
 	private XMPPConnection mConn;
-	private int check = 0;
+	private boolean isInitialization = true;
+	private boolean isPrediction = false;
 
 	@Override
 	public void onStart(){
@@ -168,17 +169,22 @@ public class ChatlogActivity extends Activity {
 				String domain = XMPPManager.singleton().getDomain();
 				String text = s.toString();
 				if(!text.equals("")){
-					PredictionMessage iq = new PredictionMessage(username, domain, text, mRecipentName + "@" + domain);
-					String packetID = iq.getPacketID();
-					PacketFilter filter = new PacketIDFilter(packetID);
-					collector = XMPPManager.singleton().getXMPPConnection().createPacketCollector(filter);
-					XMPPManager.singleton().getXMPPConnection().sendPacket(iq);
-					PredictionResultModel prediction = (PredictionResultModel) collector.nextResult(10000);
-					if(prediction != null){
-						mPredictionList = prediction.getList();
-						setPredictionAdapter();
+					if(!isPrediction){
+						PredictionMessage iq = new PredictionMessage(username, domain, text, mRecipentName + "@" + domain);
+						String packetID = iq.getPacketID();
+						PacketFilter filter = new PacketIDFilter(packetID);
+						collector = XMPPManager.singleton().getXMPPConnection().createPacketCollector(filter);
+						XMPPManager.singleton().getXMPPConnection().sendPacket(iq);
+						PredictionResultModel prediction = (PredictionResultModel) collector.nextResult(4000);
+						if(prediction != null){
+							mPredictionList = prediction.getList();
+							mPredictionList.add(0,"<Select a prediction>");
+							setPredictionAdapter();
+						}else{
+							collector.cancel();
+						}
 					}else{
-						collector.cancel();
+						isPrediction = false;
 					}
 				}
 			}
@@ -220,11 +226,17 @@ public class ChatlogActivity extends Activity {
 			@Override
 			public void onItemSelected(AdapterView<?> parent, View arg1,
 					int pos, long id) {
-				check++;
-				if(check>1){
-					message.setText(parent.getSelectedItem().toString());
-					check = 0;
+				if(!isInitialization){
+					if(isPrediction == false){
+						isPrediction = true;
+						message.setText(parent.getSelectedItem().toString());
+					}else{
+						isPrediction = false;
+					}
+				}else{
+					isInitialization = false;	
 				}
+
 			}
 
 			@Override
@@ -243,59 +255,10 @@ public class ChatlogActivity extends Activity {
 			mRecipentUsername = cursor.getString(0);
 		}
 		cursor.close();
-		// PacketCollector to replace PacketListener
-
-
-		// Add PacketListener to IQ Packets
-		//		PacketFilter pFilter = new IQTypeFilter(IQ.Type.RESULT);
-		//		mConn.addPacketListener(new PacketListener(){
-		//
-		//			@Override
-		//			public void processPacket(Packet arg0) {
-		//				//				final PacketExtension extension = arg0.getExtension(PredictionMessageInfo.ELEMENT_NAME, PredictionMessageInfo.NAMESPACE);
-		//				String queryXML = ((IQ)arg0).getChildElementXML();
-		//				mPredictionList = getPrediction(queryXML);
-		//				//				mPredictionList.add("A");
-		//				predictionAdapter.notifyDataSetChanged();
-		//			}
-		//
-		//			private ArrayList<String> getPrediction(String input){
-		//				ArrayList<String> temp  = new ArrayList<String>();
-		//				DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();
-		//				DocumentBuilder b = null;
-		//				try {
-		//					b = f.newDocumentBuilder();
-		//				} catch (ParserConfigurationException e) {
-		//					Log.e(TAG, "Failed to create a document builder", e);
-		//				}
-		//				Document doc = null;
-		//				try {
-		//					doc = b.parse(new ByteArrayInputStream(input.getBytes("UTF-8")));
-		//				} catch (UnsupportedEncodingException e) {
-		//					Log.e(TAG, "Divice does not support UTF-8", e);
-		//				} catch (SAXException e) {
-		//					Log.e(TAG, "Failed to parse the prediction result packet", e);
-		//				} catch (IOException e) {
-		//					Log.e(TAG, "IOException during parsing of prediction result packet", e);
-		//				}
-		//				NodeList queries = doc.getElementsByTagName(PredictionMessageInfo.ELEMENT_NAME);
-		//				for (int i = 0; i < queries.getLength(); i++) {
-		//					Element query = (Element) queries.item(i);
-		//					Node prediction = query.getElementsByTagName(PredictionMessageInfo.PREDICTION).item(0);
-		//					temp.add(prediction.getTextContent());
-		//				}
-		//				//				return temp;
-		//				ArrayList<String> test = new ArrayList<String>();
-		//				test.add("a");
-		//				test.add("b");
-		//				return test;
-		//			}
-		//
-		//		}, pFilter);
-
 	}	
 
 	private void setPredictionAdapter(){
+		isInitialization = true;
 		mPredictionAdapter = new ArrayAdapter<String>(this,android.R.layout.simple_spinner_item, mPredictionList);
 		mPredictionAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		mPrediction.setAdapter(mPredictionAdapter);

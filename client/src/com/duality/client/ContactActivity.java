@@ -91,7 +91,11 @@ public class ContactActivity extends Activity{
 				mDb.close();
 		mHelper.close();
 		Intent intent = new Intent(ContactActivity.this, ContactService.class);
-		stopService(intent);
+		try {
+			stopService(intent);
+		} catch (Exception e){
+			
+		}
 	}
 	
 	public List<String> getContact(){
