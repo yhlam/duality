@@ -173,9 +173,9 @@ public class ChatlogActivity extends Activity {
 					PacketFilter filter = new PacketIDFilter(packetID);
 					collector = XMPPManager.singleton().getXMPPConnection().createPacketCollector(filter);
 					XMPPManager.singleton().getXMPPConnection().sendPacket(iq);
-					IQ prediction = (IQ) collector.nextResult(2000);
+					PredictionResultModel prediction = (PredictionResultModel) collector.nextResult(10000);
 					if(prediction != null){
-						//mPredictionList = prediction.getList();
+						mPredictionList = prediction.getList();
 						setPredictionAdapter();
 					}else{
 						collector.cancel();

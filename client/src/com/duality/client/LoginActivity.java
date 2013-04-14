@@ -142,7 +142,7 @@ public class LoginActivity extends Activity {
 		protected void onPostExecute(Integer result){
 			switch(result){
 			case 1:
-				startActivity(new Intent(LoginActivity.this, MainActivity.class));
+				startActivity(new Intent(LoginActivity.this, ContactActivity.class));
 				break;
 			case -1:
 				Toast.makeText(getApplicationContext(),
