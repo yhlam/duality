@@ -11,6 +11,7 @@ import java.util.Set;
 import com.duality.server.openfirePlugin.dataTier.HistoryDatabaseAdapter;
 import com.duality.server.openfirePlugin.dataTier.HistoryEntry;
 import com.duality.server.openfirePlugin.dataTier.MessageType;
+import com.duality.server.openfirePlugin.dataTier.NextHistoryInfo;
 import com.duality.server.openfirePlugin.prediction.FeatureKey;
 import com.duality.server.openfirePlugin.prediction.PredictionEngine;
 import com.duality.server.openfirePlugin.prediction.impl.feature.AtomicFeature;
@@ -32,8 +33,10 @@ import com.google.common.collect.Table;
 public class TfIdfNgramPredictionEngine extends PredictionEngine {
 	private static final int MAX_PREDICTION_NUM = 10;
 	private static final int NEXT_ENTRY_TIME_LIMIT = 60 * 60 * 1000; // 1 Hour
+	private static final long LOOKBACK_MESSAGE_PERIOD = 15 * 60 * 1000; // 15 minutes
+	private static final int LOOKBACK_MESSAGE_MAX_COUNT = 20;
 	private static final double MIN_CLOSENESS = 0.0;
-	private static final Class<? extends ClosenessAggregator> AGGREGATOR = DotProductAggregator.class;
+	private static final Class<? extends ClosenessAggregator> AGGREGATOR = ConsineAggregator.class;
 
 	private static final ClosenessAggregator createAggregator() {
 		try {
@@ -86,21 +89,32 @@ public class TfIdfNgramPredictionEngine extends PredictionEngine {
 			for (final TermFrequency tf : tfs) {
 				final int id = tf.getDocumentId();
 
-				final HistoryEntry nextHistory = historyDb.nextHistoryEntry(id, NEXT_ENTRY_TIME_LIMIT, type);
-				if (nextHistory == null) {
-					continue;
-				}
-
-				final String message = nextHistory.getMessage();
-				if (incompletedMessage != null) {
-					if (!message.startsWith(incompletedMessage)) {
-						continue;
+				long nextTimeInterval = NEXT_ENTRY_TIME_LIMIT;
+				int nextId = id;
+				int count = 0;
+				while (count < LOOKBACK_MESSAGE_MAX_COUNT && nextTimeInterval >= 0) {
+					final NextHistoryInfo historyInfo = historyDb.nextHistoryEntry(nextId);
+					if (historyInfo == null) {
+						break;
 					}
-				}
 
-				final double frequency = tf.getFrequency();
-				final double closeness = tfIdfIdf * frequency;
-				aggregator.offer(message, id, closeness);
+					final HistoryEntry history = historyInfo.history;
+					nextId = history.getId();
+					if (historyInfo.type == type && historyInfo.interval <= nextTimeInterval) {
+						final String message = history.getMessage();
+						if (incompletedMessage == null || message.startsWith(incompletedMessage)) {
+							final double frequency = tf.getFrequency();
+							final double closeness = tfIdfIdf * frequency;
+							final double discount = Math.exp(-count);
+							aggregator.offer(message, id, nextId, discount, closeness);
+						}
+					}
+					count++;
+					if(count == 1) {
+						nextTimeInterval = LOOKBACK_MESSAGE_PERIOD;
+					}
+					nextTimeInterval -= historyInfo.interval;
+				}
 			}
 		}
 
@@ -164,7 +178,7 @@ public class TfIdfNgramPredictionEngine extends PredictionEngine {
 	}
 
 	private static interface ClosenessAggregator extends Iterable<MessageCloseness> {
-		public void offer(final String message, final int id, final double tfIdfProduct);
+		public void offer(final String message, final int msgId, final int fromId, final double discount, final double tfIdfProduct);
 
 		public double getMinCloseness(final Map<FeatureKey<?>, Object> context);
 	}
@@ -175,16 +189,15 @@ public class TfIdfNgramPredictionEngine extends PredictionEngine {
 		private final Map<String, List<Double>> closenesses = Maps.newHashMap();
 
 		@Override
-		public void offer(final String message, final int id, final double tfIdfProduct) {
+		public void offer(final String message, final int msgId, final int fromId, final double discount, final double tfIdfProduct) {
 			final String key = message.toLowerCase();
 			final List<Double> existing = closenesses.get(message);
 			if (existing == null) {
 				final List<Double> tfIdfs = Lists.newLinkedList();
-				tfIdfs.add(tfIdfProduct);
+				tfIdfs.add(tfIdfProduct * discount);
 				closenesses.put(key, tfIdfs);
 			} else {
-				existing.add(tfIdfProduct);
-				closenesses.put(key, existing);
+				existing.add(tfIdfProduct * discount);
 			}
 
 			Multiset<String> messages = key2Message.get(key);
@@ -244,17 +257,18 @@ public class TfIdfNgramPredictionEngine extends PredictionEngine {
 	private static class ConsineAggregator implements ClosenessAggregator {
 
 		private final Map<String, Multiset<String>> key2Message = Maps.newHashMap();
-		private final Table<String, Integer, Double> closenesses = HashBasedTable.create();
+		private final Table<String, Integer, List<IdDiscountCloseness>> closenesses = HashBasedTable.create();
 
 		@Override
-		public void offer(final String message, final int id, final double tfIdfProduct) {
+		public void offer(final String message, final int msgId, final int fromId, final double discount, final double tfIdfProduct) {
 			final String key = message.toLowerCase();
-			final Double existing = closenesses.get(key, id);
+			final List<IdDiscountCloseness> existing = closenesses.get(key, msgId);
 			if (existing == null) {
-				closenesses.put(key, id, tfIdfProduct);
+				final List<IdDiscountCloseness> newList = Lists.newLinkedList();
+				newList.add(new IdDiscountCloseness(fromId, discount, tfIdfProduct));
+				closenesses.put(key, msgId, newList);
 			} else {
-				final double total = existing + tfIdfProduct;
-				closenesses.put(key, id, total);
+				existing.add(new IdDiscountCloseness(fromId, discount, tfIdfProduct));
 			}
 
 			Multiset<String> messages = key2Message.get(key);
@@ -270,28 +284,41 @@ public class TfIdfNgramPredictionEngine extends PredictionEngine {
 			final Map<Integer, Double> modulusCache = Maps.newHashMap();
 			final TfIdfFeatureStore tfIdfFeatureStore = TfIdfFeatureStore.singleton();
 
-			final Map<String, Map<Integer, Double>> rowMap = closenesses.rowMap();
-			final Set<Entry<String, Map<Integer, Double>>> rows = rowMap.entrySet();
-			final Iterator<Entry<String, Map<Integer, Double>>> iterator = rows.iterator();
+			final Map<String, Map<Integer, List<IdDiscountCloseness>>> rowMap = closenesses.rowMap();
+			final Set<Entry<String, Map<Integer, List<IdDiscountCloseness>>>> rows = rowMap.entrySet();
+			final Iterator<Entry<String, Map<Integer, List<IdDiscountCloseness>>>> iterator = rows.iterator();
 
-			final Iterator<MessageCloseness> closenessIt = Iterators.transform(iterator, new Function<Entry<String, Map<Integer, Double>>, MessageCloseness>() {
+			final Iterator<MessageCloseness> closenessIt = Iterators.transform(iterator, new Function<Entry<String, Map<Integer, List<IdDiscountCloseness>>>, MessageCloseness>() {
 				@Override
-				public MessageCloseness apply(final Entry<String, Map<Integer, Double>> entry) {
+				public MessageCloseness apply(final Entry<String, Map<Integer, List<IdDiscountCloseness>>> entry) {
 					double closeness = 0;
 
-					final Map<Integer, Double> dotProducts = entry.getValue();
-					final Set<Entry<Integer, Double>> dotProductEntries = dotProducts.entrySet();
-					for (final Entry<Integer, Double> dotProduct : dotProductEntries) {
-						final Integer id = dotProduct.getKey();
-						Double modulus = modulusCache.get(id);
-						if (modulus == null) {
-							final Map<FeatureKey<?>, Object> features = tfIdfFeatureStore.getFeatures(id);
-							modulus = calcModulus(features);
-							modulusCache.put(id, modulus);
+					final Map<Integer, List<IdDiscountCloseness>> dotProducts = entry.getValue();
+					final Set<Entry<Integer, List<IdDiscountCloseness>>> dotProductEntries = dotProducts.entrySet();
+					for (final Entry<Integer, List<IdDiscountCloseness>> dotProduct : dotProductEntries) {
+						final List<IdDiscountCloseness> values = dotProduct.getValue();
+						final Map<Integer, Double> id2discount = Maps.newHashMap();
+						double consine = 0;
+						for (IdDiscountCloseness value : values) {
+							id2discount.put(value.id, value.discount);
+							consine += value.discount * value.closeness;
 						}
-
-						final Double value = dotProduct.getValue();
-						final double consine = value / modulus;
+						
+						double totalModulus = 0;
+						final Set<Entry<Integer, Double>> idDiscounts = id2discount.entrySet();
+						for (Entry<Integer, Double> idDiscount : idDiscounts) {
+							final Integer id = idDiscount.getKey();
+							Double modulus = modulusCache.get(id);
+							if (modulus == null) {
+								final Map<FeatureKey<?>, Object> features = tfIdfFeatureStore.getFeatures(id);
+								modulus = calcModulus(features);
+								modulusCache.put(id, modulus);
+							}
+							
+							final Double discount = idDiscount.getValue();
+							totalModulus += modulus * discount * discount;
+						}
+						consine /= Math.sqrt(totalModulus);
 						closeness += consine;
 					}
 
@@ -336,7 +363,19 @@ public class TfIdfNgramPredictionEngine extends PredictionEngine {
 				}
 			}
 
-			return Math.sqrt(modulus);
+			return modulus;
+		}
+		
+		private static class IdDiscountCloseness {
+			public final int id;
+			public final double discount;
+			public final double closeness;
+
+			public IdDiscountCloseness(int id, double discount, double closeness) {
+				this.id = id;
+				this.discount = discount;
+				this.closeness = closeness;
+			}
 		}
 	}
 }

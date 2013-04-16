@@ -103,30 +103,9 @@ public abstract class CachingHistoryDbAdapter extends HistoryDatabaseAdapter {
 	}
 
 	@Override
-	public HistoryEntry nextHistoryEntry(final int id, final long timeInterval, final MessageType type) {
-		long nextTimeInterval = timeInterval;
-		int nextId = id;
-		synchronized (cacheLock) {
-			while (nextTimeInterval >= 0) {
-				final NextHistoryInfo historyInfo = getValueById(nextId, nextEntry);
-				if (historyInfo == null) {
-					return null;
-				}
-
-				if (historyInfo.type == type && historyInfo.interval <= timeInterval) {
-					return historyInfo.history;
-				}
-
-				if (type == MessageType.SUPPLEMENT && historyInfo.type == MessageType.REPLY) {
-					return null;
-				}
-
-				nextId = historyInfo.history.getId();
-				nextTimeInterval -= historyInfo.interval;
-			}
-		}
-
-		return null;
+	public NextHistoryInfo nextHistoryEntry(final int id) {
+		final NextHistoryInfo historyInfo = getValueById(id, nextEntry);
+		return historyInfo;
 	}
 
 	@Override
@@ -245,18 +224,6 @@ public abstract class CachingHistoryDbAdapter extends HistoryDatabaseAdapter {
 			}
 
 			return false;
-		}
-	}
-
-	private static class NextHistoryInfo {
-		public final HistoryEntry history;
-		public final long interval;
-		public final MessageType type;
-
-		public NextHistoryInfo(final HistoryEntry history, final long interval, final MessageType type) {
-			this.history = history;
-			this.interval = interval;
-			this.type = type;
 		}
 	}
 }

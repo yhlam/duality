@@ -65,7 +65,7 @@ public abstract class HistoryDatabaseAdapter {
 	 *            Only return next history entry if it is sent within timeInterval after the currentHistoryEntry is created; in milliseconds
 	 * @return the next History Entry if it is within the timeInterval; null otherwise.
 	 */
-	public abstract HistoryEntry nextHistoryEntry(final int id, final long timeInterval, final MessageType type);
+	public abstract NextHistoryInfo nextHistoryEntry(final int id);
 
 	/**
 	 * Get the last History Entry of a sender-receiver pair
