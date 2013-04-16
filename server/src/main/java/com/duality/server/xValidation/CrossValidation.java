@@ -1,6 +1,5 @@
 package com.duality.server.xValidation;
 
-import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -8,7 +7,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -38,7 +36,6 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Multiset.Entry;
 import com.google.common.collect.Sets;
-
 
 public class CrossValidation {
 
@@ -96,43 +93,43 @@ public class CrossValidation {
 
 		return Collections.unmodifiableMap(tfIdfs);
 	}
-	
-	private static void writeToDb(final String filename, final String testName, Map<Query, List<Prediction>> predictions) {
+
+	private static void writeToDb(final String filename, final String testName, final Map<Query, List<Prediction>> predictions) {
 		try {
 			Class.forName("org.sqlite.JDBC");
-		} catch (ClassNotFoundException e1) {
+		} catch (final ClassNotFoundException e1) {
 			e1.printStackTrace();
 			return;
 		}
-		String connStr = "jdbc:sqlite:" + filename;
+		final String connStr = "jdbc:sqlite:" + filename;
 
 		// Making Connection
 		Connection connection = null;
-		try{
+		try {
 			connection = DriverManager.getConnection(connStr);
 			connection.setAutoCommit(false);
-			
+
 			PreparedStatement statement = connection.prepareStatement(INSERT_TEST_SQL);
 			statement.setString(1, testName);
 			statement.execute();
-			
+
 			final int testId = getId(connection);
-			
+
 			final Set<Map.Entry<Query, List<Prediction>>> entrySet = predictions.entrySet();
-			for (Map.Entry<Query, List<Prediction>> entry : entrySet) {
+			for (final Map.Entry<Query, List<Prediction>> entry : entrySet) {
 				final Query key = entry.getKey();
 				final String query = key.getQuery();
 				final String actualResponse = key.getActualResponse();
-				
+
 				statement = connection.prepareStatement(INSERT_QUERY_SQL);
 				statement.setInt(1, testId);
 				statement.setString(2, query);
 				statement.setString(3, actualResponse);
 				statement.execute();
-				
+
 				final int queryId = getId(connection);
 				final List<Prediction> value = entry.getValue();
-				for (Prediction prediction : value) {
+				for (final Prediction prediction : value) {
 					final int charGiven = prediction.getCharGiven();
 					final String str = prediction.getPrediction();
 					statement = connection.prepareStatement(INSERT_PREDICTION_SQL);
@@ -142,21 +139,22 @@ public class CrossValidation {
 					statement.execute();
 				}
 			}
-			
+
 			connection.commit();
-		} catch(SQLException e){
+		} catch (final SQLException e) {
 			e.printStackTrace();
 		} finally {
 			try {
-				if(connection != null)
+				if (connection != null) {
 					connection.close();
-			} catch(SQLException e){
+				}
+			} catch (final SQLException e) {
 				e.printStackTrace();
 			}
 		}
 	}
 
-	private static int getId(Connection connection) throws SQLException {
+	private static int getId(final Connection connection) throws SQLException {
 		final Statement stmt = connection.createStatement();
 		final ResultSet rs = stmt.executeQuery(ID_SQL);
 		rs.next();
@@ -164,79 +162,74 @@ public class CrossValidation {
 		return id;
 	}
 
-	public static void main(String[] args) throws IOException {
+	public static void main(final String[] args) throws IOException {
 		initialize();
-		
+
 		final ChunkdedHistoryDbAdapter dbAdapter = (ChunkdedHistoryDbAdapter) HistoryDatabaseAdapter.singleton();
 		final CachingHistoryDbAdapter underlyingDbAdapter = dbAdapter.getUnderlying();
 		final FPStore fpStore = FPStore.singleton();
 		final TfIdfStore tfIdfStore = TfIdfStore.singleton();
 		final TfIdfFeatureStore tfIdfFeatureStore = TfIdfFeatureStore.singleton();
 		final PredictionEngine predictionEngine = PredictionEngine.singleton();
-		
-		final FileWriter writer = new FileWriter("crossValdataion.out");
-		
-		for(int round = 1; round <= 10; round++) {
-			if(round != 1) {
+
+		for (int round = 1; round <= 10; round++) {
+			if (round != 1) {
 				dbAdapter.refresh();
 				fpStore.refresh();
 				tfIdfStore.refresh();
 				tfIdfFeatureStore.refresh();
 			}
-			
-			System.out.println("Validating (" + round + "/" + N_FOLD + ")");
-//			writer.write("*******************************************************\n");
-//			writer.write("* Validation Round " + round + "\n");
-//			writer.write("*******************************************************\n\n");
-			final Map<Query, List<Prediction>> map = new HashMap<Query, List<Prediction>>();
 
+			System.out.println("Validating (" + round + "/" + N_FOLD + ")");
+
+			final Map<Query, List<Prediction>> map = new HashMap<Query, List<Prediction>>();
 			final SortedSet<Integer> testSetIds = dbAdapter.getTestSetIds();
-			for (Integer id : testSetIds) {
+			for (final Integer id : testSetIds) {
 				final NextHistoryInfo nextHistoryInfo = underlyingDbAdapter.nextHistoryEntry(id);
 				final HistoryEntry nextHistoryEntry = nextHistoryInfo == null ? null : (nextHistoryInfo.interval < MAX_DEAD_AIR_INTERVAL ? nextHistoryInfo.history : null);
-				if(nextHistoryEntry != null) {
+				if (nextHistoryEntry != null) {
 					final HistoryEntry history = underlyingDbAdapter.getHistoryById(id);
 					final String message = history.getMessage();
 					final String target = nextHistoryEntry.getMessage();
-					
-//					writer.write("Message: " + message + "\n");
-//					writer.write("Target : " + target + "\n");
-					Query query = new Query(message, target);					
-					
+
+					final Query query = new Query(message, target);
+
 					final String sender = history.getSender();
 					final String nextSender = nextHistoryEntry.getSender();
 					final MessageType type = sender.equals(nextSender) ? MessageType.SUPPLEMENT : MessageType.REPLY;
-					
+
 					final Map<FeatureKey<?>, Object> features = extractFeatures(history);
-					
+
+					final Map<String, Integer> pred2Length = Maps.newHashMap();
 					final StringBuilder incomplete = new StringBuilder();
 					final String[] splites = target.split("");
-					for (String character : splites) {
+					for (final String character : splites) {
 						incomplete.append(character);
 						final String incompleteStr = incomplete.toString();
 						final List<String> predictions = predictionEngine.getPredictions(features, incompleteStr, type);
-						if(predictions.isEmpty()) {
+						if (predictions.isEmpty()) {
 							break;
 						}
-						final List<Prediction> pList = new ArrayList<Prediction>();
-//						writer.write("\nPredictions on incomplete message \"" + incompleteStr + "\":\n");
-						for (String pred : predictions) {
-//							writer.write("\t" + pred + "\n");
-							Prediction input = new Prediction(pred.length(), pred);
-							pList.add(input);							
-						}
-						map.put(query, pList);
-					}
-					
 
-//					writer.write("\n--------------------------------------------------\n\n");
+						final int length = incompleteStr.length();
+						for (final String pred : predictions) {
+							pred2Length.put(pred, length);
+						}
+					}
+
+					final List<Prediction> pList = Lists.newLinkedList();
+					final Set<java.util.Map.Entry<String, Integer>> entrySet = pred2Length.entrySet();
+					for (final Map.Entry<String, Integer> entry : entrySet) {
+						final String pred = entry.getKey();
+						final Integer value = entry.getValue();
+						pList.add(new Prediction(value, pred));
+					}
+					map.put(query, pList);
 				}
 			}
-			
+
 			writeToDb("db.sqlite", "Validation" + round, map);
 			dbAdapter.nextChunk();
 		}
-
-//		writer.close();
 	}
 }
