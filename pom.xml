@@ -14,6 +14,7 @@
 		<module>client</module>
 		<module>xValidation</module>
 		<module>uniqueness</module>
+		<module>chatlogImporter</module>
 	</modules>
 
 	<url>http://github.com/yhlam/duality</url>

@@ -1,4 +1,4 @@
-package com.chatlogimporter;
+package com.duality.chatlogImporter;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -29,10 +29,10 @@ public class ChatlogParser {
 	public String getRecipent(String dir){
 		String temp = "";
 		if(dir.contains("WhatsApp")){
-			if(dir.contains("ªº¹ï¸Ü")){
+			if(dir.contains("ï¿½ï¿½ï¿½ï¿½ï¿½")){
 				language = "Chinese";
-				temp = dir.replaceAll(".*WhatsApp »P", "");
-				temp = temp.replaceAll("ªº¹ï¸Ü.*", "");
+				temp = dir.replaceAll(".*WhatsApp ï¿½P", "");
+				temp = temp.replaceAll("ï¿½ï¿½ï¿½ï¿½ï¿½.*", "");
 			}else{
 				language = "English";
 				temp = dir.replaceAll(".*WhatsApp Chat with ", "");
@@ -125,8 +125,8 @@ public class ChatlogParser {
 			if(isFound){
 				int end = matcher.end();
 				String dateTimeString = matcher.group(0);
-				SimpleDateFormat format = new SimpleDateFormat("M '¤ë' d '¤é' a h:mm", Locale.TRADITIONAL_CHINESE);
-				SimpleDateFormat format2 = new SimpleDateFormat("H:mm, M '¤ë' d", Locale.TRADITIONAL_CHINESE);
+				SimpleDateFormat format = new SimpleDateFormat("M 'ï¿½ï¿½' d 'ï¿½ï¿½' a h:mm", Locale.TRADITIONAL_CHINESE);
+				SimpleDateFormat format2 = new SimpleDateFormat("H:mm, M 'ï¿½ï¿½' d", Locale.TRADITIONAL_CHINESE);
 				Date parsed = null;
 				try {
 					parsed = format.parse(dateTimeString);

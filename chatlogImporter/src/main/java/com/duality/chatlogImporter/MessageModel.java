@@ -1,4 +1,4 @@
-package com.chatlogimporter;
+package com.duality.chatlogImporter;
 
 public class MessageModel {
 	private String senderName;

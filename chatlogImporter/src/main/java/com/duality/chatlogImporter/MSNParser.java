@@ -1,4 +1,4 @@
-package com.chatlogimporter;
+package com.duality.chatlogImporter;
 
 import java.io.File;
 
