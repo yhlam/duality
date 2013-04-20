@@ -21,7 +21,6 @@
 		<dependency>
 			<groupId>com.duality</groupId>
 			<artifactId>duality-api</artifactId>
-			<version>1.0.0-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.igniterealtime.openfire</groupId>
@@ -37,27 +36,22 @@
 		<dependency>
 			<groupId>org.apache.opennlp</groupId>
 			<artifactId>opennlp-tools</artifactId>
-			<version>1.5.2-incubating</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.lucene</groupId>
 			<artifactId>lucene-core</artifactId>
-			<version>4.2.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.lucene</groupId>
 			<artifactId>lucene-snowball</artifactId>
-			<version>3.0.3</version>
 		</dependency>
 		<dependency>
 			<groupId>org.wltea.ik-analyzer</groupId>
 			<artifactId>ik-analyzer</artifactId>
-			<version>2012-u6-tc</version>
 		</dependency>
 		<dependency>
 			<groupId>org.xerial</groupId>
 			<artifactId>sqlite-jdbc</artifactId>
-			<version>3.7.2</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
