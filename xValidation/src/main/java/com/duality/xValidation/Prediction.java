@@ -1,4 +1,4 @@
-package com.duality.server.xValidation;
+package com.duality.xValidation;
 
 public class Prediction {
 	private final int testId;

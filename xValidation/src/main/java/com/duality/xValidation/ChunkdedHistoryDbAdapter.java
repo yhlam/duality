@@ -1,4 +1,4 @@
-package com.duality.server.xValidation;
+package com.duality.xValidation;
 
 import java.lang.reflect.Method;
 import java.util.Collections;
