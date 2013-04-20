@@ -11,7 +11,7 @@
 	</parent>
 
 	<artifactId>duality-server</artifactId>
-	<packaging>openfire-plugin</packaging>
+	<packaging>jar</packaging>
 	<name>duality-server</name>
 
 	<properties>
@@ -103,6 +103,19 @@
 				<groupId>com.reucon.maven.plugins</groupId>
 				<artifactId>maven-openfire-plugin</artifactId>
 				<extensions>true</extensions>
+			</plugin>
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<configuration>
+					<archive>
+						<manifest>
+							<mainClass>com.duality.server.xValidation.CrossValidation</mainClass>
+						</manifest>
+					</archive>
+					<descriptorRefs>
+						<descriptorRef>jar-with-dependencies</descriptorRef>
+					</descriptorRefs>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>

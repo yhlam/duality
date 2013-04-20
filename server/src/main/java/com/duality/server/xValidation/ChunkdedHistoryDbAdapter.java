@@ -65,6 +65,10 @@ public class ChunkdedHistoryDbAdapter extends CachingHistoryDbAdapter {
 		return set;
 	}
 
+	public void setChunk(int chunk) {
+		this.chunk = chunk;
+	}
+	
 	public void nextChunk() {
 		chunk++;
 	}
