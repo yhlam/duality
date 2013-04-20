@@ -4,6 +4,6 @@ import java.util.List;
 
 import com.duality.server.openfirePlugin.dataTier.HistoryEntry;
 
-interface AtomicFeaturesProvider {
+public interface AtomicFeaturesProvider {
 	void constructFeatures(HistoryEntry history, List<AtomicFeature<?>> features);
 }

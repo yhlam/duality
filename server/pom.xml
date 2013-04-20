@@ -11,7 +11,6 @@
 	</parent>
 
 	<artifactId>duality-server</artifactId>
-	<packaging>openfire-plugin</packaging>
 	<name>duality-server</name>
 
 	<properties>
@@ -103,6 +102,18 @@
 				<groupId>com.reucon.maven.plugins</groupId>
 				<artifactId>maven-openfire-plugin</artifactId>
 				<extensions>true</extensions>
+				<executions>
+					<execution>
+						<goals>
+							<goal>openfire-plugin</goal>
+						</goals>
+						<phase>package</phase>
+						<configuration>
+							<warName>duality-plugin</warName>
+							<primaryArtifact>false</primaryArtifact>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>

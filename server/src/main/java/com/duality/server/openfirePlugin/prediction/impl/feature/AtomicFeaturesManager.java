@@ -15,17 +15,17 @@ public class AtomicFeaturesManager {
 		return INSTANCE;
 	}
 
-	private final List<AtomicFeaturesProvider> providers;
+	private List<AtomicFeaturesProvider> providers;
 	private final Map<Integer, List<AtomicFeature<?>>> featureCache;
 
 	private AtomicFeaturesManager() {
-		providers = Arrays.asList(
-				new UserFeaturesProvider(),
-				new TimeFeaturesProdiver(),
-				new LocationFeaturesProvider(),
-				new TokenFeaturesProvider());
-
+		providers = Arrays.asList(new TimeFeaturesProdiver(), new TokenFeaturesProvider(), new UserFeaturesProvider());
 		featureCache = Maps.newConcurrentMap();
+	}
+	
+	public void setProviders(List<AtomicFeaturesProvider> providers) {
+		this.providers = providers;
+		featureCache.clear();
 	}
 
 	public List<AtomicFeature<?>> getFeatures(final HistoryEntry history) {
