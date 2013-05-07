@@ -6,6 +6,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import org.jivesoftware.smack.PacketListener;
+import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.filter.MessageTypeFilter;
 import org.jivesoftware.smack.filter.PacketFilter;
 import org.jivesoftware.smack.packet.Message;
@@ -30,16 +31,18 @@ import com.duality.client.model.ChatDataSQL;
 import com.duality.client.model.LocationMessage;
 import com.duality.client.model.XMPPManager;
 
-public class MainService extends Service {
+public class ContactService extends Service {
 
-	SQLiteDatabase mDb;
-	ChatDataSQL mHelper;
-	private String dbName = "ChatDatabase";
-	private String messagesTable = "Messages";
 	private static final int NOTIFICATION_ID = 1;
+	private final String DB_NAME = "ChatDatabase";
+	private final String MESSAGE_TABLE = "Messages";
+
+	private SQLiteDatabase mDb;
+	private ChatDataSQL mHelper;	
 	private NotificationManager mNtfMgr;
 	private Timer mTimer;
 	private Location mLocation;
+	private XMPPConnection mConn;
 
 	@Override
 	public IBinder onBind(Intent arg0) {
@@ -48,53 +51,38 @@ public class MainService extends Service {
 	}
 
 	@Override
-	public void onCreate() {
+	public void onCreate(){
 		super.onCreate();
-		mHelper = new ChatDataSQL(this, dbName);
+	}
+
+	@Override
+	public void onDestroy(){
+		super.onDestroy();
+		if(mDb != null)
+			if(mDb.isOpen())
+				mDb.close();
+		mHelper.close();
+		mTimer.cancel();
+		mNtfMgr.cancelAll();
+		mConn.disconnect();
+	}
+
+	@Override
+	public int onStartCommand(Intent intent, int flags, int startId){
+		super.onStartCommand(intent, flags, startId);
+		mHelper = new ChatDataSQL(this, DB_NAME);
 		mNtfMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 		mLocation = getLocation();
-		
 		mTimer = new Timer(true);
-		// Sending out Presence Packet in a 10 seconds interval
 		mTimer.scheduleAtFixedRate(new TimedUpdater(), 10000, 10000);
-	}
-	
-	public Location getLocation(){
-		LocationManager locMgr = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-		Location loc = locMgr.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-		if(loc == null){
-			loc = locMgr.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-		}
-		return loc;
-	}
+		mConn = XMPPManager.singleton().getXMPPConnection();
 
-	private class TimedUpdater extends TimerTask{
-
-		@Override
-		public void run() {
-			// Updating GPS
-			final double longitude = mLocation.getLongitude();
-			final double latitude = mLocation.getLatitude();
-			final String domain = XMPPManager.singleton().getDomain();
-			final String username = XMPPManager.singleton().getUsername();
-			final LocationMessage packet = new LocationMessage(username, domain, longitude, latitude);
-			XMPPManager.singleton().getXMPPConnection().sendPacket(packet);
-		}
-
-	}
-
-
-	public int onStartCommand(Intent intent, int flags, int startId){
-
-		super.onStartCommand(intent, flags, startId);
-
-		if (XMPPManager.singleton().getXMPPConnection() != null) {
+		if (mConn != null) {
 			PacketFilter filter = new MessageTypeFilter(Message.Type.chat);
-			XMPPManager.singleton().getXMPPConnection().addPacketListener(new PacketListener() {
+			mConn.addPacketListener(new PacketListener() {
 
 				@Override
 				public void processPacket(Packet packet) {
-
 					Message message = (Message) packet;
 					if (message.getBody() != null) {
 						String senderUsername = StringUtils.parseBareAddress(message.getFrom());
@@ -105,9 +93,8 @@ public class MainService extends Service {
 						c.put("message", text);
 						SimpleDateFormat dateTimeFormatter =  new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
 						c.put("sendtime", dateTimeFormatter.format(new Date()));
-
 						mDb = mHelper.getWritableDatabase();
-						long isInserted = mDb.insert(messagesTable, "", c);
+						long isInserted = mDb.insert(MESSAGE_TABLE, "", c);
 						if(isInserted == -1){
 
 						}else{
@@ -119,14 +106,34 @@ public class MainService extends Service {
 							bundle.putString("sender", senderUsername);
 							i.putExtras(bundle);
 							sendBroadcast(i);
-
 						}
-
 					}
 				}
 			}, filter);
 		}
 		return 0;
+	}
+
+	private Location getLocation(){
+		LocationManager locMgr = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+		Location loc = locMgr.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+		if(loc == null){
+			loc = locMgr.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+		}
+		return loc;
+	}
+
+	private class TimedUpdater extends TimerTask{
+		@Override
+		public void run() {
+			// Updating GPS
+			final double longitude = mLocation.getLongitude();
+			final double latitude = mLocation.getLatitude();
+			final String domain = XMPPManager.singleton().getDomain();
+			final String username = XMPPManager.singleton().getUsername();
+			final LocationMessage packet = new LocationMessage(username, domain, longitude, latitude);
+			mConn.sendPacket(packet);
+		}
 
 	}
 
@@ -152,7 +159,6 @@ public class MainService extends Service {
 	}
 
 	private void showNotification(String senderUsername, String text){
-
 		Intent intent = new Intent(this, MainActivity.class);
 		PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
 		Notification notification = new Notification.Builder(this)
@@ -164,13 +170,5 @@ public class MainService extends Service {
 		.setAutoCancel(true)
 		.getNotification();
 		mNtfMgr.notify(NOTIFICATION_ID, notification);
-
-	}
-
-	@Override
-	public void onDestroy(){
-		super.onDestroy();
-//		mDb.close();
-//		XMPPManager.singleton().getXMPPConnection().disconnect();
 	}
 }
