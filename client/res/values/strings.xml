@@ -39,6 +39,7 @@
     <string name="chatlog_send">Send</string>
     <string name="hintTypeMessage">Type your message here.</string>
     <string name="contact_add">Add Users</string>
+    <string name="contact_profile">Profile</string>
     
     <string name="prompt_domain">Domain Name</string>
     <string name="prompt_ip">IP Address</string>
