@@ -3,6 +3,7 @@ package com.duality.client;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 import org.jivesoftware.smack.PacketCollector;
@@ -39,6 +40,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.SimpleAdapter;
+import android.widget.SimpleAdapter.ViewBinder;
 import android.widget.Spinner;
 import android.widget.TextView;
 
@@ -55,8 +58,9 @@ public class ChatlogActivity extends Activity {
 
 	private String mRecipentName;
 	private String mRecipentUsername;
-	private List<String> mMessages = new ArrayList<String>();
-	private ArrayAdapter<String> mAdapter;
+	//	private List<String> mMessages = new ArrayList<String>();
+	private List<HashMap<String, Object>> mMessages = new ArrayList<HashMap<String, Object>>();
+	private SimpleAdapter mAdapter;
 	private ListView mMessageList;
 	private ChatlogReceiver mReceiver;
 	private Spinner mPrediction;
@@ -67,7 +71,7 @@ public class ChatlogActivity extends Activity {
 	private XMPPConnection mConn;
 	private boolean isInitialization = true;
 	private boolean isPrediction = false;
-	private VCard mVCard;
+	//	private VCard mVCard;
 
 	@Override
 	public void onStart(){
@@ -216,7 +220,25 @@ public class ChatlogActivity extends Activity {
 					if(isInserted == -1){
 						throw new Exception();
 					}else{
-						mMessages.add("You: " + text);
+						HashMap<String, Object> item = new HashMap<String, Object>();
+						String userDomain = XMPPManager.singleton().getUsername();
+						Bitmap bitmap = null;
+						// Load Avatar
+						VCard vCard = new VCard();
+						try {
+							vCard.load(mConn, userDomain);
+							if(vCard.getAvatar() != null){
+								byte[] picStream = vCard.getAvatar();
+								bitmap = BitmapFactory.decodeByteArray(picStream, 0, picStream.length);
+							}
+						} catch (XMPPException e) {
+							e.printStackTrace();
+						}
+						item.put("pic", bitmap);
+						item.put("message", "You: " + text);
+						mMessages.add(item);
+
+						//						mMessages.add("You: " + text);
 						mAdapter.notifyDataSetChanged();
 						message.setText("");
 						mPredictionList.clear();
@@ -262,20 +284,6 @@ public class ChatlogActivity extends Activity {
 		}
 		cursor.close();
 
-		// Load Avatar
-		mVCard = new VCard();
-		try {
-			String userDomain = mRecipentUsername;
-			mVCard.load(mConn, userDomain);
-			if(mVCard.getAvatar() != null){
-				byte[] picStream = mVCard.getAvatar();
-				Bitmap bitmap = BitmapFactory.decodeByteArray(picStream, 0, picStream.length);
-				ImageView img = (ImageView) this.findViewById(R.id.chatlog_image);
-				img.setImageBitmap(bitmap);
-			}
-		} catch (XMPPException e) {
-			e.printStackTrace();
-		}
 	}	
 
 	private void setPredictionAdapter(){
@@ -286,7 +294,23 @@ public class ChatlogActivity extends Activity {
 	}
 
 	private void setListAdapter() {
-		mAdapter = new ArrayAdapter<String>(this, R.layout.multi_line_list_item, R.id.contact_history_text, mMessages);
+		mAdapter = new SimpleAdapter(this, mMessages, R.layout.multi_line_list_item, new String[]{"pic","message"}, new int[]{R.id.chatlog_image, R.id.contact_history_text});
+		//		mAdapter = new ArrayAdapter<String>(this, R.layout.multi_line_list_item, R.id.contact_history_text, mMessages);
+		mAdapter.setViewBinder(new ViewBinder(){
+
+			@Override
+			public boolean setViewValue(View view, Object data, String textRepresentation) {
+				if( (view instanceof ImageView) & (data instanceof Bitmap) ) {  
+					ImageView img = (ImageView) view;  
+					Bitmap bm = (Bitmap) data;  
+					img.setImageBitmap(bm);  
+					return true;  
+				}  
+
+				return false;
+			}
+
+		});
 		mMessageList.setAdapter(mAdapter);
 		mMessageList.setSelection(mMessages.size());
 	}
@@ -312,17 +336,40 @@ public class ChatlogActivity extends Activity {
 		return temp;
 	}
 
-	private ArrayList<String> showContactHistory(){
+	private ArrayList<HashMap<String, Object>> showContactHistory(){
 		mDb = mHelper.getReadableDatabase();
 		Cursor cursor = mDb.rawQuery("select sender, message from Messages WHERE ((recipent=? AND sender=?) OR (recipent=? AND sender=?)) ORDER BY _ID, datetime(sendtime)", new String[]{String.valueOf(mRecipentUsername), String.valueOf(XMPPManager.singleton().getUsername()), String.valueOf(XMPPManager.singleton().getUsername()),String.valueOf(mRecipentUsername)});
-		ArrayList<String> temp = new ArrayList<String>();
+		ArrayList<HashMap<String, Object>> temp = new ArrayList<HashMap<String, Object>>();
 		int row_count = cursor.getCount();
 		if(row_count != 0){
 			cursor.moveToFirst();
 			for(int i = 0; i<row_count;i++){
+				HashMap<String, Object> item = new HashMap<String, Object>();
 				String sender = getName(cursor.getString(0));
 				String string = sender + ": " + cursor.getString(1);
-				temp.add(string);
+
+				String userDomain = "";
+				Bitmap bitmap = null;
+				if(sender!="You"){
+					userDomain = mRecipentUsername;
+				}else{
+					userDomain = XMPPManager.singleton().getUsername();
+				}
+				// Load Avatar
+				VCard vCard = new VCard();
+				try {
+					vCard.load(mConn, userDomain);
+					if(vCard.getAvatar() != null){
+						byte[] picStream = vCard.getAvatar();
+						bitmap = BitmapFactory.decodeByteArray(picStream, 0, picStream.length);
+					}
+				} catch (XMPPException e) {
+					e.printStackTrace();
+				}
+
+				item.put("pic", bitmap);
+				item.put("message", string);
+				temp.add(item);
 				cursor.moveToNext();
 			}
 		}
@@ -330,11 +377,31 @@ public class ChatlogActivity extends Activity {
 		mDb.close();
 		return temp;
 	}
+
 	private class ChatlogReceiver extends BroadcastReceiver{
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			Bundle bundle = intent.getExtras();
-			mMessages.add(getName(bundle.getString("sender")) + ": " + bundle.getString("text"));
+
+			HashMap<String, Object> item = new HashMap<String, Object>();
+			String userDomain = XMPPManager.singleton().getUsername();
+			Bitmap bitmap = null;
+			// Load Avatar
+			//			VCard vCard = new VCard();
+			//			try {
+			//				vCard.load(mConn, userDomain);
+			//				if(vCard.getAvatar() != null){
+			//					byte[] picStream = vCard.getAvatar();
+			//					bitmap = BitmapFactory.decodeByteArray(picStream, 0, picStream.length);
+			//				}
+			//			} catch (XMPPException e) {
+			//				e.printStackTrace();
+			//			}
+			item.put("pic", bitmap);
+			item.put("message", getName(bundle.getString("sender")) + ": " + bundle.getString("text"));
+			mMessages.add(item);
+
+			//mMessages.add(getName(bundle.getString("sender")) + ": " + bundle.getString("text"));
 			mAdapter.notifyDataSetChanged();
 		}
 
