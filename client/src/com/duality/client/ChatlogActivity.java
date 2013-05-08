@@ -7,12 +7,14 @@ import java.util.List;
 
 import org.jivesoftware.smack.PacketCollector;
 import org.jivesoftware.smack.XMPPConnection;
+import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.filter.PacketFilter;
 import org.jivesoftware.smack.filter.PacketIDFilter;
 import org.jivesoftware.smack.packet.IQ;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.provider.IQProvider;
 import org.jivesoftware.smack.provider.ProviderManager;
+import org.jivesoftware.smackx.packet.VCard;
 import org.xmlpull.v1.XmlPullParser;
 
 import android.app.Activity;
@@ -23,6 +25,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -33,6 +37,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -62,6 +67,7 @@ public class ChatlogActivity extends Activity {
 	private XMPPConnection mConn;
 	private boolean isInitialization = true;
 	private boolean isPrediction = false;
+	private VCard mVCard;
 
 	@Override
 	public void onStart(){
@@ -255,6 +261,21 @@ public class ChatlogActivity extends Activity {
 			mRecipentUsername = cursor.getString(0);
 		}
 		cursor.close();
+
+		// Load Avatar
+		mVCard = new VCard();
+		try {
+			String userDomain = mRecipentUsername;
+			mVCard.load(mConn, userDomain);
+			if(mVCard.getAvatar() != null){
+				byte[] picStream = mVCard.getAvatar();
+				Bitmap bitmap = BitmapFactory.decodeByteArray(picStream, 0, picStream.length);
+				ImageView img = (ImageView) this.findViewById(R.id.chatlog_image);
+				img.setImageBitmap(bitmap);
+			}
+		} catch (XMPPException e) {
+			e.printStackTrace();
+		}
 	}	
 
 	private void setPredictionAdapter(){
@@ -265,7 +286,7 @@ public class ChatlogActivity extends Activity {
 	}
 
 	private void setListAdapter() {
-		mAdapter = new ArrayAdapter<String>(this, R.layout.multi_line_list_item, R.id.contact_history_text, mMessages); 
+		mAdapter = new ArrayAdapter<String>(this, R.layout.multi_line_list_item, R.id.contact_history_text, mMessages);
 		mMessageList.setAdapter(mAdapter);
 		mMessageList.setSelection(mMessages.size());
 	}

@@ -4,16 +4,25 @@
     android:layout_height="match_parent"
     tools:context=".ChatActivity" >
 
-    <TextView
-        android:id="@+id/chatlog_recipentName"
+    <LinearLayout
+        android:id="@+id/chatlog_profileBlock"
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" >
+
+
+
+        <TextView
+            android:id="@+id/chatlog_recipentName"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
 
     <ListView
         android:id="@+id/chatlog_chatlog"
         android:layout_width="wrap_content"
         android:layout_height="460px"
-        android:layout_below="@+id/chatlog_recipentName"
+        android:layout_below="@+id/chatlog_profileBlock"
         android:layout_weight="1"
         android:scrollbars="horizontal" />
 

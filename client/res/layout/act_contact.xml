@@ -6,6 +6,11 @@
     android:layout_height="match_parent"
     android:orientation="vertical" >
 
+    <ImageView
+        android:id="@+id/contact_image"
+        android:layout_width="50dp"
+        android:layout_height="50dp" />
+    
     <ListView
         android:id="@+id/contact_contactList"
         android:layout_width="fill_parent"
@@ -54,11 +59,5 @@
         android:id="@+id/contact_profile"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:text="@string/contact_profile" />
-    
-    <ImageView
-        android:id="@+id/contact_image"
-        android:layout_width="50dp"
-        android:layout_height="50dp" />
-    
+        android:text="@string/contact_profile" />    
 </LinearLayout>
