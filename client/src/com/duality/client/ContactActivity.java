@@ -38,17 +38,17 @@ import com.duality.client.model.ChatDataSQL;
 import com.duality.client.model.XMPPManager;
 
 public class ContactActivity extends Activity{
-	
+
 	private final String DB_NAME = "ChatDatabase";
 	private final String RECIPENT_TABLE = "Recipents";
-	
+
 	private SQLiteDatabase mDb;
 	private ChatDataSQL mHelper;
 	private List<String> mContactList;
 	private ContactItemAdapter mAdapter;
 	private VCard mVCard;
 	private XMPPConnection mXmpp;
-	
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -56,8 +56,8 @@ public class ContactActivity extends Activity{
 		Intent intent = new Intent(ContactActivity.this, ContactService.class);
 		startService(intent);
 	}
-	
-	
+
+
 	@Override
 	public void onStart(){
 		super.onStart();
@@ -85,7 +85,7 @@ public class ContactActivity extends Activity{
 		} catch (XMPPException e) {
 			e.printStackTrace();
 		}
-		
+
 		addButton.setOnClickListener(new Button.OnClickListener() {
 			@Override
 			public void onClick(View w) {
@@ -111,7 +111,7 @@ public class ContactActivity extends Activity{
 				}
 			}
 		});
-		
+
 		profileButton.setOnClickListener(new Button.OnClickListener(){
 			@Override
 			public void onClick(View v) {
@@ -121,30 +121,30 @@ public class ContactActivity extends Activity{
 				startActivityForResult(photoPickerIntent, 1);
 			}
 		});
-		
+
 	}
-	
+
 	//TODO: Change the code syntax
 	public byte[] getBytesFromBitmap(Bitmap bitmap) {
-	    ByteArrayOutputStream stream = new ByteArrayOutputStream();
-	    bitmap.compress(CompressFormat.JPEG, 70, stream);
-	    return stream.toByteArray();
+		ByteArrayOutputStream stream = new ByteArrayOutputStream();
+		bitmap.compress(CompressFormat.JPEG, 70, stream);
+		return stream.toByteArray();
 	}
-	
+
 	//TODO: Change the code syntax
 	protected void onActivityResult(int requestCode, int resultCode, Intent data)
 	{
-	    super.onActivityResult(requestCode, resultCode, data);
-	    if (resultCode == RESULT_OK)
-	    {
-	        Uri chosenImageUri = data.getData();
+		super.onActivityResult(requestCode, resultCode, data);
+		if (resultCode == RESULT_OK)
+		{
+			Uri chosenImageUri = data.getData();
 
-	        Bitmap mBitmap = null;
-	        try {
+			Bitmap mBitmap = null;
+			try {
 				mBitmap = Media.getBitmap(this.getContentResolver(), chosenImageUri);
 				ByteArrayOutputStream stream=new ByteArrayOutputStream();
-			    mBitmap.compress(Bitmap.CompressFormat.JPEG, 90, stream);
-			    byte[] result=stream.toByteArray();
+				mBitmap.compress(Bitmap.CompressFormat.JPEG, 90, stream);
+				byte[] result=stream.toByteArray();
 
 				VCard vCard = new VCard();
 				vCard.setAvatar(result);
@@ -153,35 +153,36 @@ public class ContactActivity extends Activity{
 				} catch (XMPPException e) {
 					e.printStackTrace();
 				}
-				
+
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-	        }
+		}
 	}
-	
+
 	@Override
 	public void onStop(){
 		super.onStop();
-	}
-	
-	@Override
-	public void onDestroy(){
-		super.onDestroy();
 		if(mDb != null)
 			if(mDb.isOpen())
 				mDb.close();
 		mHelper.close();
+	}
+
+	@Override
+	public void onDestroy(){
+		super.onDestroy();
+
 		Intent intent = new Intent(ContactActivity.this, ContactService.class);
 		try {
 			stopService(intent);
 		} catch (Exception e){
-			
+
 		}
 	}
-	
+
 	public List<String> getContact(){
 		mDb = mHelper.getReadableDatabase();
 		Cursor cursor = mDb.rawQuery("select name from Recipents WHERE sender=? ORDER BY _ID DESC", new String[]{String.valueOf(XMPPManager.singleton().getUsername())});
@@ -198,7 +199,7 @@ public class ContactActivity extends Activity{
 		cursor.close();
 		return result;
 	}
-	
+
 	private static class ContactItemAdapter extends BaseAdapter{
 		private final Context mContext;
 		private final List<String> mString;
@@ -249,12 +250,12 @@ public class ContactActivity extends Activity{
 					mContext.startActivity(intent);
 				}
 			});    
-			
+
 			return convertView;
 		}
 
 	}
-	
+
 	private static class ContactTag{
 		TextView mName;
 		public ContactTag(TextView textView){

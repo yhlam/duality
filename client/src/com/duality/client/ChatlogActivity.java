@@ -94,7 +94,7 @@ public class ChatlogActivity extends Activity {
 		super.onStop();
 		unregisterReceiver(mReceiver);
 		mHelper.close();
-		if(mDb != null && !mDb.isOpen())
+		if(mDb != null && mDb.isOpen())
 			mDb.close();
 	}
 
@@ -283,7 +283,8 @@ public class ChatlogActivity extends Activity {
 			mRecipentUsername = cursor.getString(0);
 		}
 		cursor.close();
-
+		mDb.close();
+		mHelper.close();
 	}	
 
 	private void setPredictionAdapter(){
@@ -330,6 +331,7 @@ public class ChatlogActivity extends Activity {
 			}
 			cursor.close();
 			mDb.close();
+			mHelper.close();
 		}else{
 			temp = "You";
 		}
@@ -375,6 +377,7 @@ public class ChatlogActivity extends Activity {
 		}
 		cursor.close();
 		mDb.close();
+		mHelper.close();
 		return temp;
 	}
 
