@@ -384,19 +384,19 @@ public class ChatlogActivity extends Activity {
 			Bundle bundle = intent.getExtras();
 
 			HashMap<String, Object> item = new HashMap<String, Object>();
-			String userDomain = XMPPManager.singleton().getUsername();
+			String userDomain = mRecipentUsername;
 			Bitmap bitmap = null;
 			// Load Avatar
-			//			VCard vCard = new VCard();
-			//			try {
-			//				vCard.load(mConn, userDomain);
-			//				if(vCard.getAvatar() != null){
-			//					byte[] picStream = vCard.getAvatar();
-			//					bitmap = BitmapFactory.decodeByteArray(picStream, 0, picStream.length);
-			//				}
-			//			} catch (XMPPException e) {
-			//				e.printStackTrace();
-			//			}
+			VCard vCard = new VCard();
+			try {
+				vCard.load(mConn, userDomain);
+				if(vCard.getAvatar() != null){
+					byte[] picStream = vCard.getAvatar();
+					bitmap = BitmapFactory.decodeByteArray(picStream, 0, picStream.length);
+				}
+			} catch (XMPPException e) {
+				e.printStackTrace();
+			}
 			item.put("pic", bitmap);
 			item.put("message", getName(bundle.getString("sender")) + ": " + bundle.getString("text"));
 			mMessages.add(item);
