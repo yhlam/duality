@@ -58,7 +58,6 @@ public class ChatlogActivity extends Activity {
 
 	private String mRecipentName;
 	private String mRecipentUsername;
-	//	private List<String> mMessages = new ArrayList<String>();
 	private List<HashMap<String, Object>> mMessages = new ArrayList<HashMap<String, Object>>();
 	private SimpleAdapter mAdapter;
 	private ListView mMessageList;
@@ -71,7 +70,10 @@ public class ChatlogActivity extends Activity {
 	private XMPPConnection mConn;
 	private boolean isInitialization = true;
 	private boolean isPrediction = false;
-	//	private VCard mVCard;
+	private VCard mRecipentVCard;
+	private Bitmap mRecipentPic;
+	private VCard mUserVCard;
+	private Bitmap mUserPic;
 
 	@Override
 	public void onStart(){
@@ -121,7 +123,6 @@ public class ChatlogActivity extends Activity {
 		mPredictionList = new ArrayList<String>();
 		setListAdapter();
 		setPredictionAdapter();
-
 
 		ProviderManager.getInstance().addIQProvider(PredictionMessageInfo.ELEMENT_NAME, PredictionMessageInfo.NAMESPACE, new IQProvider(){
 			@Override
@@ -220,25 +221,11 @@ public class ChatlogActivity extends Activity {
 					if(isInserted == -1){
 						throw new Exception();
 					}else{
-						HashMap<String, Object> item = new HashMap<String, Object>();
-						String userDomain = XMPPManager.singleton().getUsername();
-						Bitmap bitmap = null;
 						// Load Avatar
-						VCard vCard = new VCard();
-						try {
-							vCard.load(mConn, userDomain);
-							if(vCard.getAvatar() != null){
-								byte[] picStream = vCard.getAvatar();
-								bitmap = BitmapFactory.decodeByteArray(picStream, 0, picStream.length);
-							}
-						} catch (XMPPException e) {
-							e.printStackTrace();
-						}
-						item.put("pic", bitmap);
+						HashMap<String, Object> item = new HashMap<String, Object>();
+						item.put("pic", mUserPic);
 						item.put("message", "You: " + text);
 						mMessages.add(item);
-
-						//						mMessages.add("You: " + text);
 						mAdapter.notifyDataSetChanged();
 						message.setText("");
 						mPredictionList.clear();
@@ -285,6 +272,30 @@ public class ChatlogActivity extends Activity {
 		cursor.close();
 		mDb.close();
 		mHelper.close();
+
+		// Reading Avatar for both recipent and sender
+		mRecipentVCard = new VCard();
+		try {
+			mRecipentVCard.load(mConn, mRecipentUsername);
+			if(mRecipentVCard.getAvatar()!=null){
+				byte[] picStream = mRecipentVCard.getAvatar();
+				mRecipentPic = BitmapFactory.decodeByteArray(picStream, 0, picStream.length);
+			}
+		} catch (XMPPException e) {
+			e.printStackTrace();
+		}
+
+		mUserVCard = new VCard();
+		try {
+			mUserVCard.load(mConn, XMPPManager.singleton().getUsername());
+			if(mUserVCard.getAvatar()!=null){
+				byte[] picStream = mUserVCard.getAvatar();
+				mUserPic = BitmapFactory.decodeByteArray(picStream, 0, picStream.length);
+			}
+		} catch (XMPPException e) {
+			e.printStackTrace();
+		}
+
 	}	
 
 	private void setPredictionAdapter(){
@@ -350,26 +361,11 @@ public class ChatlogActivity extends Activity {
 				String sender = getName(cursor.getString(0));
 				String string = sender + ": " + cursor.getString(1);
 
-				String userDomain = "";
-				Bitmap bitmap = null;
-				if(sender!="You"){
-					userDomain = mRecipentUsername;
+				if(sender.equals("You")){
+					item.put("pic", mRecipentPic);
 				}else{
-					userDomain = XMPPManager.singleton().getUsername();
+					item.put("pic", mUserPic);
 				}
-				// Load Avatar
-				VCard vCard = new VCard();
-				try {
-					vCard.load(mConn, userDomain);
-					if(vCard.getAvatar() != null){
-						byte[] picStream = vCard.getAvatar();
-						bitmap = BitmapFactory.decodeByteArray(picStream, 0, picStream.length);
-					}
-				} catch (XMPPException e) {
-					e.printStackTrace();
-				}
-
-				item.put("pic", bitmap);
 				item.put("message", string);
 				temp.add(item);
 				cursor.moveToNext();
@@ -385,26 +381,11 @@ public class ChatlogActivity extends Activity {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			Bundle bundle = intent.getExtras();
-
-			HashMap<String, Object> item = new HashMap<String, Object>();
-			String userDomain = mRecipentUsername;
-			Bitmap bitmap = null;
 			// Load Avatar
-			VCard vCard = new VCard();
-			try {
-				vCard.load(mConn, userDomain);
-				if(vCard.getAvatar() != null){
-					byte[] picStream = vCard.getAvatar();
-					bitmap = BitmapFactory.decodeByteArray(picStream, 0, picStream.length);
-				}
-			} catch (XMPPException e) {
-				e.printStackTrace();
-			}
-			item.put("pic", bitmap);
+			HashMap<String, Object> item = new HashMap<String, Object>();
+			item.put("pic", mRecipentPic);
 			item.put("message", getName(bundle.getString("sender")) + ": " + bundle.getString("text"));
 			mMessages.add(item);
-
-			//mMessages.add(getName(bundle.getString("sender")) + ": " + bundle.getString("text"));
 			mAdapter.notifyDataSetChanged();
 		}
 
