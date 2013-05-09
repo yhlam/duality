@@ -159,7 +159,7 @@ public class ContactService extends Service {
 	}
 
 	private void showNotification(String senderUsername, String text){
-		Intent intent = new Intent(this, MainActivity.class);
+		Intent intent = new Intent(this, ContactActivity.class);
 		PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
 		Notification notification = new Notification.Builder(this)
 		.setSmallIcon(R.drawable.ic_launcher)
