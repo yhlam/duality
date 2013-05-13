@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.duality</groupId>
 	<artifactId>duality</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>Duality</name>
 
@@ -26,7 +26,7 @@
 		<url>http://github.com/yhlam/duality/tree/${scm.branch}</url>
 		<connection>scm:git:git://github.com/yhlam/duality.git</connection>
 		<developerConnection>scm:git:ssh://git@github.com/yhlam/duality.git</developerConnection>
-	  <tag>duality-1.0.0</tag>
+	  <tag>HEAD</tag>
   </scm>
 	<repositories>
 		<repository>
@@ -46,27 +46,27 @@
 			<dependency>
 				<groupId>com.duality</groupId>
 				<artifactId>duality-api</artifactId>
-				<version>1.0.0</version>
+				<version>1.0.1-SNAPSHOT</version>
 			</dependency>
 			<dependency>
 				<groupId>com.duality</groupId>
 				<artifactId>duality-client</artifactId>
-				<version>1.0.0</version>
+				<version>1.0.1-SNAPSHOT</version>
 			</dependency>
 			<dependency>
 				<groupId>com.duality</groupId>
 				<artifactId>duality-server</artifactId>
-				<version>1.0.0</version>
+				<version>1.0.1-SNAPSHOT</version>
 			</dependency>
 			<dependency>
 				<groupId>com.duality</groupId>
 				<artifactId>duality-xValidation</artifactId>
-				<version>1.0.0</version>
+				<version>1.0.1-SNAPSHOT</version>
 			</dependency>
 			<dependency>
 				<groupId>com.duality</groupId>
 				<artifactId>duality-uniqueness</artifactId>
-				<version>1.0.0</version>
+				<version>1.0.1-SNAPSHOT</version>
 			</dependency>
 			<dependency>
 				<groupId>org.apache.opennlp</groupId>
@@ -125,12 +125,12 @@
 				<plugin>
 					<groupId>com.duality</groupId>
 					<artifactId>duality-xValidation</artifactId>
-					<version>1.0.0</version>
+					<version>1.0.1-SNAPSHOT</version>
 				</plugin>
 				<plugin>
 					<groupId>com.duality</groupId>
 					<artifactId>duality-uniqueness</artifactId>
-					<version>1.0.0</version>
+					<version>1.0.1-SNAPSHOT</version>
 				</plugin>
 				<plugin>
 					<groupId>com.jayway.maven.plugins.android.generation2</groupId>
