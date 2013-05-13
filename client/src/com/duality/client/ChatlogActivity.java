@@ -3,16 +3,19 @@ package com.duality.client;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 import org.jivesoftware.smack.PacketCollector;
 import org.jivesoftware.smack.XMPPConnection;
+import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.filter.PacketFilter;
 import org.jivesoftware.smack.filter.PacketIDFilter;
 import org.jivesoftware.smack.packet.IQ;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.provider.IQProvider;
 import org.jivesoftware.smack.provider.ProviderManager;
+import org.jivesoftware.smackx.packet.VCard;
 import org.xmlpull.v1.XmlPullParser;
 
 import android.app.Activity;
@@ -23,6 +26,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -33,7 +38,10 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.SimpleAdapter;
+import android.widget.SimpleAdapter.ViewBinder;
 import android.widget.Spinner;
 import android.widget.TextView;
 
@@ -50,8 +58,8 @@ public class ChatlogActivity extends Activity {
 
 	private String mRecipentName;
 	private String mRecipentUsername;
-	private List<String> mMessages = new ArrayList<String>();
-	private ArrayAdapter<String> mAdapter;
+	private List<HashMap<String, Object>> mMessages = new ArrayList<HashMap<String, Object>>();
+	private SimpleAdapter mAdapter;
 	private ListView mMessageList;
 	private ChatlogReceiver mReceiver;
 	private Spinner mPrediction;
@@ -62,6 +70,10 @@ public class ChatlogActivity extends Activity {
 	private XMPPConnection mConn;
 	private boolean isInitialization = true;
 	private boolean isPrediction = false;
+	private VCard mRecipentVCard;
+	private Bitmap mRecipentPic;
+	private VCard mUserVCard;
+	private Bitmap mUserPic;
 
 	@Override
 	public void onStart(){
@@ -84,7 +96,7 @@ public class ChatlogActivity extends Activity {
 		super.onStop();
 		unregisterReceiver(mReceiver);
 		mHelper.close();
-		if(mDb != null && !mDb.isOpen())
+		if(mDb != null && mDb.isOpen())
 			mDb.close();
 	}
 
@@ -111,7 +123,6 @@ public class ChatlogActivity extends Activity {
 		mPredictionList = new ArrayList<String>();
 		setListAdapter();
 		setPredictionAdapter();
-
 
 		ProviderManager.getInstance().addIQProvider(PredictionMessageInfo.ELEMENT_NAME, PredictionMessageInfo.NAMESPACE, new IQProvider(){
 			@Override
@@ -210,7 +221,11 @@ public class ChatlogActivity extends Activity {
 					if(isInserted == -1){
 						throw new Exception();
 					}else{
-						mMessages.add("You: " + text);
+						// Load Avatar
+						HashMap<String, Object> item = new HashMap<String, Object>();
+						item.put("pic", mUserPic);
+						item.put("message", "You: " + text);
+						mMessages.add(item);
 						mAdapter.notifyDataSetChanged();
 						message.setText("");
 						mPredictionList.clear();
@@ -255,6 +270,32 @@ public class ChatlogActivity extends Activity {
 			mRecipentUsername = cursor.getString(0);
 		}
 		cursor.close();
+		mDb.close();
+		mHelper.close();
+
+		// Reading Avatar for both recipent and sender
+		mRecipentVCard = new VCard();
+		try {
+			mRecipentVCard.load(mConn, mRecipentUsername);
+			if(mRecipentVCard.getAvatar()!=null){
+				byte[] picStream = mRecipentVCard.getAvatar();
+				mRecipentPic = BitmapFactory.decodeByteArray(picStream, 0, picStream.length);
+			}
+		} catch (XMPPException e) {
+			e.printStackTrace();
+		}
+
+		mUserVCard = new VCard();
+		try {
+			mUserVCard.load(mConn, XMPPManager.singleton().getUsername());
+			if(mUserVCard.getAvatar()!=null){
+				byte[] picStream = mUserVCard.getAvatar();
+				mUserPic = BitmapFactory.decodeByteArray(picStream, 0, picStream.length);
+			}
+		} catch (XMPPException e) {
+			e.printStackTrace();
+		}
+
 	}	
 
 	private void setPredictionAdapter(){
@@ -265,7 +306,23 @@ public class ChatlogActivity extends Activity {
 	}
 
 	private void setListAdapter() {
-		mAdapter = new ArrayAdapter<String>(this, R.layout.multi_line_list_item, R.id.contact_history_text, mMessages); 
+		mAdapter = new SimpleAdapter(this, mMessages, R.layout.multi_line_list_item, new String[]{"pic","message"}, new int[]{R.id.chatlog_image, R.id.contact_history_text});
+		//		mAdapter = new ArrayAdapter<String>(this, R.layout.multi_line_list_item, R.id.contact_history_text, mMessages);
+		mAdapter.setViewBinder(new ViewBinder(){
+
+			@Override
+			public boolean setViewValue(View view, Object data, String textRepresentation) {
+				if( (view instanceof ImageView) & (data instanceof Bitmap) ) {  
+					ImageView img = (ImageView) view;  
+					Bitmap bm = (Bitmap) data;  
+					img.setImageBitmap(bm);  
+					return true;  
+				}  
+
+				return false;
+			}
+
+		});
 		mMessageList.setAdapter(mAdapter);
 		mMessageList.setSelection(mMessages.size());
 	}
@@ -285,35 +342,50 @@ public class ChatlogActivity extends Activity {
 			}
 			cursor.close();
 			mDb.close();
+			mHelper.close();
 		}else{
 			temp = "You";
 		}
 		return temp;
 	}
 
-	private ArrayList<String> showContactHistory(){
+	private ArrayList<HashMap<String, Object>> showContactHistory(){
 		mDb = mHelper.getReadableDatabase();
 		Cursor cursor = mDb.rawQuery("select sender, message from Messages WHERE ((recipent=? AND sender=?) OR (recipent=? AND sender=?)) ORDER BY _ID, datetime(sendtime)", new String[]{String.valueOf(mRecipentUsername), String.valueOf(XMPPManager.singleton().getUsername()), String.valueOf(XMPPManager.singleton().getUsername()),String.valueOf(mRecipentUsername)});
-		ArrayList<String> temp = new ArrayList<String>();
+		ArrayList<HashMap<String, Object>> temp = new ArrayList<HashMap<String, Object>>();
 		int row_count = cursor.getCount();
 		if(row_count != 0){
 			cursor.moveToFirst();
 			for(int i = 0; i<row_count;i++){
+				HashMap<String, Object> item = new HashMap<String, Object>();
 				String sender = getName(cursor.getString(0));
 				String string = sender + ": " + cursor.getString(1);
-				temp.add(string);
+
+				if(sender.equals("You")){
+					item.put("pic", mRecipentPic);
+				}else{
+					item.put("pic", mUserPic);
+				}
+				item.put("message", string);
+				temp.add(item);
 				cursor.moveToNext();
 			}
 		}
 		cursor.close();
 		mDb.close();
+		mHelper.close();
 		return temp;
 	}
+
 	private class ChatlogReceiver extends BroadcastReceiver{
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			Bundle bundle = intent.getExtras();
-			mMessages.add(getName(bundle.getString("sender")) + ": " + bundle.getString("text"));
+			// Load Avatar
+			HashMap<String, Object> item = new HashMap<String, Object>();
+			item.put("pic", mRecipentPic);
+			item.put("message", getName(bundle.getString("sender")) + ": " + bundle.getString("text"));
+			mMessages.add(item);
 			mAdapter.notifyDataSetChanged();
 		}
 

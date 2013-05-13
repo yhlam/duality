@@ -23,8 +23,8 @@ import com.duality.client.model.XMPPManager;
 
 public class LoginActivity extends Activity {
 
-	private String SERVERIP = "59.148.86.156";
-	private String DOMAIN = "hei-linux";
+	private String SERVERIP = "175.159.113.104";
+	private String DOMAIN = "fyp";
 	private XMPPConnection mXmpp;
 	private ConnectionConfiguration mConnect;
 	private EditText mUsername;
@@ -43,9 +43,10 @@ public class LoginActivity extends Activity {
 		mStatus = (LinearLayout) this.findViewById(R.id.login_status);
 		
 		final Button signIn = (Button) this.findViewById(R.id.login_signin);
-		final Button serverSet = (Button) this.findViewById(R.id.login_server);
-		final EditText domain = (EditText) this.findViewById(R.id.login_domain);
-		final EditText ip = (EditText) this.findViewById(R.id.login_IP);
+//		For Debug Purpose
+//		final Button serverSet = (Button) this.findViewById(R.id.login_server);
+//		final EditText domain = (EditText) this.findViewById(R.id.login_domain);
+//		final EditText ip = (EditText) this.findViewById(R.id.login_IP);
 
 		signIn.setOnClickListener(new Button.OnClickListener(){
 			
@@ -56,16 +57,16 @@ public class LoginActivity extends Activity {
 				new XMPPConnectionSetting().execute();
 			}
 		});
-
-		serverSet.setOnClickListener(new Button.OnClickListener(){
-
-			@Override
-			public void onClick(View arg0) {
-				SERVERIP = ip.getText().toString();
-				DOMAIN = domain.getText().toString();
-			}
-
-		});
+//		For Debug Purpose
+//		serverSet.setOnClickListener(new Button.OnClickListener(){
+//
+//			@Override
+//			public void onClick(View arg0) {
+//				SERVERIP = ip.getText().toString();
+//				DOMAIN = domain.getText().toString();
+//			}
+//
+//		});
 	}
 	
 	@Override
